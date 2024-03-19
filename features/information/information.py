@@ -38,7 +38,7 @@ class Information(Cog):
         """View all commands or information about a command"""
         if not command:
             return await ctx.neutral(
-                f"Click [**here**](https://shiro.wtf/commands) to view **{len(set(self.bot.walk_commands()))}** commands"
+                f"Click [**here**](https://leah.us.to/commands) to view **{len(set(self.bot.walk_commands()))}** commands"
             )
 
         command_obj: Command | Group = self.bot.get_command(command)
