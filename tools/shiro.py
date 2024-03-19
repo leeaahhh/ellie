@@ -423,7 +423,7 @@ class shiro(AutoShardedBot):
                 )
                 await ctx.error(
                     f"An unknown error occurred while running **{ctx.command.qualified_name}**\n> Please report error `{unique_id}` in the "
-                    " [**Discord Server**](https://discord.gg/ignacio)"
+                    " [**Discord Server**](https://lain.cam)"
                 )
         elif isinstance(error, CommandError):
             await ctx.error(str(error))
