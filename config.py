@@ -48,7 +48,7 @@ class Database:
     port: int = 5432
     name: str = "lain"
     user: str = "postgres"
-    password: str = "iqYY50VZRlbdc0n"
+    password: str = "postgres"
 
 
 class Lavalink:
