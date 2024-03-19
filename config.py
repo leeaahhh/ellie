@@ -44,7 +44,7 @@ class Emoji:
 
 
 class Database:
-    host: str = "194.15.36.134"
+    host: str = "localhost"
     port: int = 5432
     name: str = "lain"
     user: str = "postgres"
@@ -52,7 +52,7 @@ class Database:
 
 
 class Lavalink:
-    host: str = "194.15.36.134"
+    host: str = "localhost"
     port: int = 2333
     password: str = "youshallnotpass"
     secure: bool = False
