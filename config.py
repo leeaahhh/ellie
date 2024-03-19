@@ -9,9 +9,9 @@ def is_debug() -> bool:
 
 
 token: str = (
-    "MTIwNjMwNjk4MTcwMzQ1MDY1NA.GHssoD.118Zbn3X6QwXCExeRqRl1JInd9ZJltwO2kQSAU"
+    "MTIwNjMwNjk4MTcwMzQ1MDY1NA.GAWbPo.ZSvynvbu7LBltWyDlBRwTQxQ1jo7HCN2gteBvA"
     if not is_debug()
-    else "MTIxOTQ1ODQxMjE3ODQ0MDIxMg.G4Ix1h.IO3zZe346OZvE2wFBvtv5GdlzC9fElASAZGtIs"
+    else "MTIxOTQ1ODQxMjE3ODQ0MDIxMg.GJVRST.w6Jq-kKfSVZstF4ik4Ebw4vvFgshmQz-0BO99c"
 )
 
 prefix: str = "," if not is_debug() else "."
