@@ -151,7 +151,7 @@ class Information(Cog):
 
         embed = Embed(
             description=(
-                "Developed by **[@ignacios](https://discord.com/users/1164949148974469210)**"
+                "Developed by **[@ignacios](https://discord.com/users/1164949148974469210)** and **[@wlrc](https://discord.com/users/1202356249975595068)**"
                 + f"\n**Memory:** {size(process.memory_full_info().uss)}, **CPU:** {psutil.cpu_percent()}%"
             )
         )
