@@ -3,7 +3,7 @@ import faster_than_requests as requests
 
 def is_debug() -> bool:
     ip = requests.get2str("https://api.ipify.org")
-    if not ip.startswith("176.131.7."):
+    if not ip.startswith("194.15.36."):
         return False
     return True
 
