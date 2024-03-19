@@ -1,17 +1,11 @@
 import faster_than_requests as requests
 
 
-def is_debug() -> bool:
-    ip = requests.get2str("https://api.ipify.org")
-    if not ip.startswith("194.15.36."):
-        return False
-    return True
 
 
 token: str = (
     "MTIwNjMwNjk4MTcwMzQ1MDY1NA.GAWbPo.ZSvynvbu7LBltWyDlBRwTQxQ1jo7HCN2gteBvA"
-    if not is_debug()
-    else "MTIxOTQ1ODQxMjE3ODQ0MDIxMg.GJVRST.w6Jq-kKfSVZstF4ik4Ebw4vvFgshmQz-0BO99c"
+
 )
 
 prefix: str = "," if not is_debug() else "."
