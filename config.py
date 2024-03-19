@@ -1,14 +1,10 @@
-import faster_than_requests as requests
-
-
-
 
 token: str = (
     "MTIwNjMwNjk4MTcwMzQ1MDY1NA.GAWbPo.ZSvynvbu7LBltWyDlBRwTQxQ1jo7HCN2gteBvA"
 
 )
 
-prefix: str = "," if not is_debug() else "."
+prefix: str = ","
 owners: list[int] = [
     1202356249975595068,
     1188222472441561179,
