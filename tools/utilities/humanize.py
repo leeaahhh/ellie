@@ -18,7 +18,7 @@ def human_timedelta(
     if isinstance(dt, datetime.timedelta):
         dt = datetime.datetime.utcfromtimestamp(dt.total_seconds())
 
-now = source or datetime.datetime.now(datetime.timezone.utc)
+now = source or datetime.datetime.now(datetime.UTC)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=datetime.UTC)
 
