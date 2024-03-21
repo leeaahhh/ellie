@@ -92,9 +92,10 @@ class shiro(AutoShardedBot):
             ),
             activity=Activity(
                 name="lain.cam on top",
-                type=ActivityType.competing,
+                type=ActivityType.streaming,
+                url='https://www.twitch.tv/logout',
             ),
-            status=Status.streaming,
+            status=Status.ide,
         )
         self.session: ClientSession
         self.node: Node
