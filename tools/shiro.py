@@ -91,10 +91,10 @@ class shiro(AutoShardedBot):
                 replied_user=False,
             ),
             activity=Activity(
-                name="discord.gg/ignacio",
+                name="lain.cam on top",
                 type=ActivityType.competing,
             ),
-            status=Status.idle,
+            status=Status.streaming,
         )
         self.session: ClientSession
         self.node: Node
