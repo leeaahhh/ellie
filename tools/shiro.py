@@ -95,7 +95,7 @@ class shiro(AutoShardedBot):
                 type=ActivityType.streaming,
                 url='https://www.twitch.tv/logout',
             ),
-            status=Status.ide,
+            status=Status.idle,
         )
         self.session: ClientSession
         self.node: Node
