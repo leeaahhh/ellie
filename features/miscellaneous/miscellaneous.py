@@ -152,7 +152,7 @@ class Miscellaneous(Cog):
 
         # curl -H "Accept: application/json" -H "Linx-Randomize: yes" -T myphoto.jpg https://linx.igna.cat/upload/
         response = await self.bot.session.put(
-            "https://linx.igna.cat/upload/",
+            "https://linx.lain.cam/upload/",
             headers={"Accept": "application/json", "Linx-Randomize": "yes"},
             data=image,
         )
@@ -822,7 +822,7 @@ class Miscellaneous(Cog):
     @group(
         name="highlight",
         usage="(subcommand) <args>",
-        example="add igna",
+        example="add ",
         aliases=["hl", "snitch"],
         invoke_without_command=True,
     )
@@ -833,7 +833,7 @@ class Miscellaneous(Cog):
     @highlight.command(
         name="add",
         usage="(word)",
-        example="igna",
+        example="",
         parameters={
             "strict": {
                 "require_value": False,
@@ -876,7 +876,7 @@ class Miscellaneous(Cog):
     @highlight.command(
         name="remove",
         usage="(word)",
-        example="igna",
+        example="",
         aliases=["delete", "del", "rm"],
     )
     async def highlight_remove(self: "Miscellaneous", ctx: Context, *, word: str):
@@ -915,11 +915,11 @@ class Miscellaneous(Cog):
             )
         except Exception:
             return await ctx.error(
-                f"You're already ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/ignacio'})"
+                f"You're already ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/cio'})"
             )
 
         await ctx.approve(
-            f"Ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/ignacio'})"
+            f"Ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/cio'})"
         )
 
     @highlight.command(
@@ -943,11 +943,11 @@ class Miscellaneous(Cog):
 
         if await self.bot.db.fetch(query, ctx.author.id, entity.id):
             return await ctx.approve(
-                f"No longer ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/ignacio'})"
+                f"No longer ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/cio'})"
             )
 
         await ctx.error(
-            f"You're not ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/ignacio'})"
+            f"You're not ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/cio'})"
         )
 
     @highlight.command(
