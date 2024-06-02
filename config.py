@@ -35,7 +35,7 @@ class Emoji:
 
 
 class Database:
-    host: str = "127.0.0.1"
+    host: str = "shiro-db"
     port: int = 5432
     name: str = "postgres"
     user: str = "postgres"
