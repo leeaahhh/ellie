@@ -22,7 +22,7 @@ class Emoji:
         unlock: str = "<:unlock:1246592327363858555>"
         ghost: str = "<:ghost~1:1246590287225032858>"
         reveal: str = "<:reveal:1246589920139804736>"
-        claim: str = "<:lcaim:1246590663148175360>"  # TODO: Fix typo
+        claim: str = "<:claim:1246590663148175360>"
         disconnect: str = "<:disconnect:1246590582944563262>"
         activity: str = "<:activity:1246589819727908915>"
         information: str = "<:information:1246589713939431557>"
@@ -35,11 +35,11 @@ class Emoji:
 
 
 class Database:
-    host: str = "shiro-db"
+    host: str = "lain-db"
     port: int = 5432
-    name: str = "postgres"
-    user: str = "postgres"
-    password: str = "leah1610"
+    name: str = "lain"
+    user: str = "lain"
+    password: str = "nY8vffNN3gA4LlEY"
 
 
 class Webserver:
