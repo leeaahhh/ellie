@@ -35,11 +35,11 @@ class Emoji:
 
 
 class Database:
-    host: str = "lain-db"
+    host: str = "shiro-db"
     port: int = 5432
-    name: str = "lain"
+    name: str = "shiro"
     user: str = "lain"
-    password: str = "nY8vffNN3gA4LlEY"
+    password: str = "pN3PqpT86Nfr"
 
 
 class Webserver:
