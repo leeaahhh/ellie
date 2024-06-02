@@ -1,0 +1,9 @@
+__pycache__/
+.venv/
+.git/
+.ruff_cache/
+.ruff.toml
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml

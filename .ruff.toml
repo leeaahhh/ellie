@@ -1,0 +1,4 @@
+ignore = ["E501"]
+
+[per-file-ignores]
+"__init__.py" = ["E402", "F403"]
