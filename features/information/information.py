@@ -16,8 +16,6 @@ from tools.managers.context import Context
 from tools.utilities.humanize import comma, ordinal, size
 from tools.utilities.text import Plural, hidden, human_join
 
-IMAGE_FOLDER = "C:\Users\Administrator\Desktop\oscar"
-
 class Information(Cog):
     """Cog for Information commands."""
 
