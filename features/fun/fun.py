@@ -406,21 +406,3 @@ class Fun(Cog):
                     f"You lost the **poker**\n\n > `{cards[0]}` `{cards[1]}`"
                 )
 
-@command(
-    name="oscar",
-    aliases=["dog"],
-)
-@max_concurrency(1, BucketType.guild)
-async def random_picture(self: "Fun", ctx: Context):
-    """send a picture of oscar"""
-    images = os.listdir(IMAGE_FOLDER)
-    images = [img for img in images if img.lower().endswith(('.png', '.jpg', '.jpeg', '.gif'))]
-
-    if not images:
-        await ctx.send("No images found in the folder!")
-        return
-
-    random_image = random.choice(images)
-    image_path = os.path.join(IMAGE_FOLDER, random_image)
-    
-    await ctx.send(file=discord.File(image_path))
