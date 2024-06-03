@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  bot:
+    build: .
+    command: python3 -O main.py
+    container_name: shiro-bot
+    depends_on:
+      - db
+    ports:
+      - "59076:59076"
+    restart: unless-stopped
+    dns:
+      - 76.76.2.2
+      - 76.76.10.2
+
+  db:
+    container_name: shiro-db
+    environment:
+      - POSTGRES_DB=shiro
+      - POSTGRES_PASSWORD=pN3PqpT86Nfr
+      - POSTGRES_USER=lain
+    image: postgres:alpine
+    expose:
+      - "5432"
+    restart: always
+    volumes:
+      - data:/var/lib/postgresql/data
+
+volumes:
+  data:
