@@ -21,3 +21,4 @@ asyncspotify
 async_timeout
 requests
 pydub
+orjson
