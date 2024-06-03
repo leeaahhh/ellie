@@ -2,9 +2,8 @@ FROM python:alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache chromium ffmpeg
+RUN apk add --no-cache chromium ffmpeg bash orjson
 RUN apk add --no-cache --virtual .build-deps musl-dev libffi-dev gcc git
-RUN apk add --no-cache bash
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 RUN apk del .build-deps
