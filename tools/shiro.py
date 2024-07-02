@@ -61,7 +61,7 @@ class shiro(AutoShardedBot):
                 replied_user=False,
             ),
             activity=Activity(
-                name=f"{config.prefix}help | {config.prefix}invite",
+                name=f"{config.prefix}invite | hello gays",
                 type=ActivityType.watching,
             ),
             status=Status.idle,
