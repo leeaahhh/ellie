@@ -35,10 +35,10 @@ class Emoji:
 
 
 class Database:
-    host: str = "shiro-db"
+    host: str = "rei-db"
     port: int = 5432
-    name: str = "shiro"
-    user: str = "lain"
+    name: str = "rei"
+    user: str = "rei"
     password: str = "pN3PqpT86Nfr"
 
 
