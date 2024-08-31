@@ -4,7 +4,7 @@ services:
   bot:
     build: .
     command: python3 -O main.py
-    container_name: shiro-bot
+    container_name: rei-bot
     depends_on:
       - db
     ports:
@@ -15,11 +15,11 @@ services:
       - 76.76.10.2
 
   db:
-    container_name: shiro-db
+    container_name: rei-db
     environment:
-      - POSTGRES_DB=shiro
+      - POSTGRES_DB=rei
       - POSTGRES_PASSWORD=pN3PqpT86Nfr
-      - POSTGRES_USER=lain
+      - POSTGRES_USER=rei
     image: postgres:alpine
     expose:
       - "5432"
