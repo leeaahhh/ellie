@@ -459,7 +459,7 @@ class Context(BaseContext):
         await self.message.add_reaction("✅")
 
     async def check(self):
-        return await self.send(content="<:freakycharlie:1279582985192083490>")
+        return await self.send(content="<a:freakycharlie:1279582985192083490>")
 
     async def prompt(self, message: str, member: Member = None, **kwargs):
         if member:
