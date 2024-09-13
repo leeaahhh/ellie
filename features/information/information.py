@@ -76,7 +76,7 @@ class Information(Cog):
 
         embed = Embed(
             description=(
-                "Developed by **[@ignacios](https://discord.com/users/1164949148974469210) and [@wlrc}(https://discord.com/users/1202356249975595068)**"
+                "Developed by **[@12kg](https://discord.com/users/947204756898713721) and [@wlrc}(https://discord.com/users/1202356249975595068)**"
                 + f"\n**Memory:** {size(process.memory_full_info().uss)}, **CPU:** {psutil.cpu_percent()}%"
             )
         )
@@ -117,7 +117,7 @@ class Information(Cog):
     @command(
         name="membercount",
         usage="<server>",
-        example="/shiro",
+        example="/rei",
         aliases=["members", "mc"],
     )
     async def membercount(
@@ -172,7 +172,7 @@ class Information(Cog):
     @command(
         name="icon",
         usage="<server>",
-        example="/shiro",
+        example="/rei",
         aliases=["servericon", "sicon", "guildicon", "gicon"],
     )
     async def icon(
@@ -197,7 +197,7 @@ class Information(Cog):
     @command(
         name="serverbanner",
         usage="<server>",
-        example="/shiro",
+        example="/rei",
         aliases=["sbanner", "guildbanner", "gbanner"],
     )
     async def serverbanner(
@@ -222,7 +222,7 @@ class Information(Cog):
     @command(
         name="serverinfo",
         usage="<server>",
-        example="/shiro",
+        example="/rei",
         aliases=["sinfo", "guildinfo", "ginfo", "si", "gi"],
     )
     async def serverinfo(
@@ -291,7 +291,7 @@ class Information(Cog):
     @command(
         name="inviteinfo",
         usage="<server>",
-        example="/shiro",
+        example="/rei",
         aliases=["iinfo", "ii"],
     )
     async def inviteinfo(

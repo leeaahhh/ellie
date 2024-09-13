@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 
 
-class shiro(AutoShardedBot):
+class rei(AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(
             command_prefix=self.get_prefix,
@@ -117,13 +117,13 @@ class shiro(AutoShardedBot):
         self.sticky_locks = {}
         self.redis: cache = cache
 
-    def run(self: "shiro"):
+    def run(self: "rei"):
         super().run(
             config.token,
             reconnect=True,
         )
 
-    async def setup_hook(self: "shiro"):
+    async def setup_hook(self: "rei"):
         self.session = ClientSession(json_serialize=lambda x: dumps(x).decode())
         await self.create_pool()
         log.info("logging into %s", self.user)
@@ -204,7 +204,7 @@ class shiro(AutoShardedBot):
             "SELECT * FROM config WHERE guild_id = $1", guild_id
         )
 
-    async def get_context(self: "shiro", origin: Message, *, cls=None) -> Context:
+    async def get_context(self: "rei", origin: Message, *, cls=None) -> Context:
         return await super().get_context(
             origin,
             cls=cls or Context,
@@ -401,7 +401,7 @@ class shiro(AutoShardedBot):
                 )
                 await ctx.error(
                     f"An unknown error occurred while running **{ctx.command.qualified_name}**\n> Please report error `{unique_id}` in the "
-                    " [**Discord Server**](https://discord.gg/ignacio)"
+                    " [**Discord Server**](https://discord.gg/3mwJgnCrZw)"
                 )
         elif isinstance(error, CommandError):
             await ctx.error(str(error))
@@ -417,7 +417,7 @@ class shiro(AutoShardedBot):
 
         await self.process_commands(after)
 
-    async def on_message(self: "shiro", message: Message):
+    async def on_message(self: "rei", message: Message):
         if not self.is_ready() or not message.guild or message.author.bot:
             return
 

@@ -71,8 +71,8 @@ def donator(booster: bool = False):
     """Check if the user is a donator"""
 
     async def predicate(ctx: commands.Context):
-        guild = ctx.bot.get_guild(1181448215699140658)
-        role = guild.get_role(1186989657678950440)
+        guild = ctx.bot.get_guild(1206246451840294942)
+        role = guild.get_role(1284293977192796161)
         user = guild.get_member(ctx.author.id)
 
         if booster:
@@ -81,7 +81,7 @@ def donator(booster: bool = False):
 
             if not user or not user.premium_since:
                 raise commands.CommandError(
-                    f"You must **boost** the shiro [**Discord Server**](https://discord.gg/ignacio) to use `{ctx.command.qualified_name}`"
+                    f"You must **boost** the rei [**Discord Server**](https://discord.gg/3mwJgnCrZw) to use `{ctx.command.qualified_name}`"
                 )
 
             return True
@@ -92,7 +92,7 @@ def donator(booster: bool = False):
 
         if not donator_check:
             raise commands.CommandError(
-                f"You must be a **donator** to use `{ctx.command.qualified_name}` - [**Discord Server**](https://discord.gg/ignacio)"
+                f"You must be a **donator** to use `{ctx.command.qualified_name}` - [**Discord Server**](https://discord.gg/3mwJgnCrZw)"
             )
 
         return True

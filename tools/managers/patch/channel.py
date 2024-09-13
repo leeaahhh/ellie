@@ -148,7 +148,7 @@ async def send(self, *args, **kwargs):
             kwargs["files"].append(
                 File(
                     StringIO(content),
-                    filename="shiroResult.txt",
+                    filename="reiResult.txt",
                 )
             )
             if args:

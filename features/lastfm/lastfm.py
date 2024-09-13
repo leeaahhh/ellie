@@ -249,7 +249,7 @@ class lastfm(Cog):
         invoke_without_command=True,
     )
     async def lastfm(self, ctx: Context):
-        """Interact with Last.fm through shiro"""
+        """Interact with Last.fm through rei"""
         await ctx.send_help()
 
     @lastfm.command(

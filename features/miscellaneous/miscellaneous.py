@@ -39,7 +39,7 @@ from tools.managers.context import Context, FlagConverter
 from tools.managers.converter import Domain
 from tools.managers.regex import DISCORD_MESSAGE, IMAGE_URL
 from tools.models.piston import PistonExecute, PistonRuntime
-from tools.shiro import shiro
+from tools.rei import rei
 from tools.utilities import donator, require_dm, shorten
 from tools.utilities.humanize import human_timedelta
 from tools.utilities.process import ensure_future
@@ -61,8 +61,8 @@ class ScreenshotFlags(FlagConverter):
 class Miscellaneous(Cog):
     """Cog for Miscellaneous commands."""
 
-    def __init__(self: "Miscellaneous", bot: "shiro"):
-        self.bot: "shiro" = bot
+    def __init__(self: "Miscellaneous", bot: "rei"):
+        self.bot: "rei" = bot
         self.browser: Browser
 
     async def openChrome(self: "Miscellaneous"):
@@ -842,11 +842,11 @@ class Miscellaneous(Cog):
             )
         except Exception:
             return await ctx.error(
-                f"You're already ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/ignacio'})"
+                f"You're already ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/3mwJgnCrZw'})"
             )
 
         await ctx.approve(
-            f"Ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/ignacio'})"
+            f"Ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/3mwJgnCrZw'})"
         )
 
     @highlight.command(
@@ -870,11 +870,11 @@ class Miscellaneous(Cog):
 
         if await self.bot.db.fetch(query, ctx.author.id, entity.id):
             return await ctx.approve(
-                f"No longer ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/ignacio'})"
+                f"No longer ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/3mwJgnCrZw'})"
             )
 
         await ctx.error(
-            f"You're not ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/ignacio'})"
+            f"You're not ignoring [**{entity}**]({entity.jump_url if isinstance(entity, (TextChannel, CategoryChannel)) else 'https://discord.gg/3mwJgnCrZw'})"
         )
 
     @highlight.command(
@@ -907,7 +907,7 @@ class Miscellaneous(Cog):
     @group(
         name="namehistory",
         usage="<user>",
-        example="shiro",
+        example="rei",
         aliases=["names", "nh"],
         invoke_without_command=True,
     )
@@ -1318,14 +1318,14 @@ class Miscellaneous(Cog):
                     return await ctx.error("Couldn't make image **transparent**")
 
                 await ctx.reply(
-                    file=File(temp_file_output, filename="shiroTransparent.png")
+                    file=File(temp_file_output, filename="reiTransparent.png")
                 )
 
     @command(
         name="screenshot",
         aliases=["ss"],
         usage="(url) <flags>",
-        example="https://shiro.wtf --full-page --delay 5",
+        example="https://rei.wtf --full-page --delay 5",
     )
     @cooldown(1, 5, BucketType.user)
     async def screenshot(

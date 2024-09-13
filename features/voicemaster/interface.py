@@ -8,7 +8,7 @@ from discord.utils import format_dt
 
 import config
 from tools.converters.basic import activity_types
-from tools.shiro import shiro
+from tools.rei import rei
 from tools.utilities.text import Plural
 
 
@@ -96,8 +96,8 @@ class ActivitySelection(Select):
 
 
 class Interface(View):
-    def __init__(self, bot: shiro):
-        self.bot: shiro = bot
+    def __init__(self, bot: rei):
+        self.bot: rei = bot
         super().__init__(
             timeout=None,
         )

@@ -11,7 +11,7 @@ from discord.ext.commands import Cog
 
 import config
 from tools.managers import logging
-from tools.shiro import shiro
+from tools.rei import rei
 
 log = logging.getLogger(__name__)
 
@@ -42,8 +42,8 @@ def route(pattern: str, method: str = "GET") -> Callable:
 
 
 class Webserver(Cog):
-    def __init__(self, bot: shiro):
-        self.bot: shiro = bot
+    def __init__(self, bot: rei):
+        self.bot: rei = bot
         self.app = Application(
             logger=log,
         )

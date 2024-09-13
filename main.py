@@ -1,9 +1,9 @@
 from discord.ext.commands import CommandError
 
 from tools.managers.context import Context
-from tools.shiro import shiro
+from tools.rei import rei
 
-bot = shiro()
+bot = rei()
 
 
 @bot.check

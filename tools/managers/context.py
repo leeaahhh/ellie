@@ -21,11 +21,11 @@ from . import views
 from .paginator import Paginator
 
 if TYPE_CHECKING:
-    from tools.shiro import shiro
+    from tools.rei import rei
 
 
 class Context(BaseContext):
-    bot: "shiro"
+    bot: "rei"
     guild: Guild
 
     @cached_property
@@ -187,7 +187,7 @@ class Context(BaseContext):
                 kwargs["files"].append(
                     File(
                         StringIO(content),
-                        filename="shiroResult.txt",
+                        filename="reiResult.txt",
                     )
                 )
                 if args:

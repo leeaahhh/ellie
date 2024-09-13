@@ -175,13 +175,13 @@ class Moderation(Cog):
     )
     @has_permissions(manage_guild=True)
     async def _set(self, ctx: Context):
-        """Set server settings through shiro"""
+        """Set server settings through rei"""
         await ctx.send_help()
 
     @_set.command(
         name="name",
         usage="(text)",
-        example="shiro guild",
+        example="rei guild",
         aliases=["n"],
     )
     @has_permissions(manage_guild=True)
@@ -398,7 +398,7 @@ class Moderation(Cog):
     @nickname.group(
         name="force",
         usage="(member) <duration> (text)",
-        example="shiro 7d shito",
+        example="rei 7d shito",
         aliases=["lock"],
         invoke_without_command=True,
     )
@@ -444,7 +444,7 @@ class Moderation(Cog):
     @nickname_force.command(
         name="cancel",
         usage="(member)",
-        example="shiro",
+        example="rei",
         aliases=["stop", "end"],
     )
     @has_permissions(manage_nicknames=True)
@@ -2469,7 +2469,7 @@ class Moderation(Cog):
         ctx: Context,
         amount: int = 50,
     ):
-        """Clean up messages from shiro"""
+        """Clean up messages from rei"""
         amount = min(amount, 2000)
 
         def check(message: Message):

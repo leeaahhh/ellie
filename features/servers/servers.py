@@ -1497,7 +1497,7 @@ class Servers(Cog):
                 for channel in ctx.guild.text_channels
                 if all(
                     ext not in channel.name.lower()
-                    for ext in ("ticket", "log", "discrim", "shiro")
+                    for ext in ("ticket", "log", "discrim", "rei")
                 )
                 and (
                     not channel.category

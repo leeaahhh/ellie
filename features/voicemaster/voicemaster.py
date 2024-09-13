@@ -10,7 +10,7 @@ import config
 from tools.converters import Bitrate, Member, Region, Role
 from tools.managers import Context, ratelimiter
 from tools.managers.cog import Cog
-from tools.shiro import shiro
+from tools.rei import rei
 
 from .interface import Interface
 
@@ -18,8 +18,8 @@ from .interface import Interface
 class VoiceMaster(Cog):
     """Cog for VoiceMaster commands."""
 
-    def __init__(self, bot: shiro):
-        self.bot: shiro = bot
+    def __init__(self, bot: rei):
+        self.bot: rei = bot
         self.bot.add_view(Interface(bot))
 
     async def cog_load(self):
@@ -296,16 +296,16 @@ class VoiceMaster(Cog):
         embed.add_field(
             name="**Button Usage**",
             value=(
-                f"{config.Emoji.Interface.lock} — [`Lock`](https://discord.gg/ignacio) the voice channel\n"
-                f"{config.Emoji.Interface.unlock} — [`Unlock`](https://discord.gg/ignacio) the voice channel\n"
-                f"{config.Emoji.Interface.ghost} — [`Ghost`](https://discord.gg/ignacio) the voice channel\n"
-                f"{config.Emoji.Interface.reveal} — [`Reveal`](https://discord.gg/ignacio) the voice channel\n"
-                f"{config.Emoji.Interface.claim} — [`Claim`](https://discord.gg/ignacio) the voice channel\n"
-                f"{config.Emoji.Interface.disconnect} — [`Disconnect`](https://discord.gg/ignacio) a member\n"
-                f"{config.Emoji.Interface.activity} — [`Start`](https://discord.gg/ignacio) a new voice channel activity\n"
-                f"{config.Emoji.Interface.information} — [`View`](https://discord.gg/ignacio) channel information\n"
-                f"{config.Emoji.Interface.increase} — [`Increase`](https://discord.gg/ignacio) the user limit\n"
-                f"{config.Emoji.Interface.decrease} — [`Decrease`](https://discord.gg/ignacio) the user limit\n"
+                f"{config.Emoji.Interface.lock} — [`Lock`](https://discord.gg/3mwJgnCrZw) the voice channel\n"
+                f"{config.Emoji.Interface.unlock} — [`Unlock`](https://discord.gg/3mwJgnCrZw) the voice channel\n"
+                f"{config.Emoji.Interface.ghost} — [`Ghost`](https://discord.gg/3mwJgnCrZw) the voice channel\n"
+                f"{config.Emoji.Interface.reveal} — [`Reveal`](https://discord.gg/3mwJgnCrZw) the voice channel\n"
+                f"{config.Emoji.Interface.claim} — [`Claim`](https://discord.gg/3mwJgnCrZw) the voice channel\n"
+                f"{config.Emoji.Interface.disconnect} — [`Disconnect`](https://discord.gg/3mwJgnCrZw) a member\n"
+                f"{config.Emoji.Interface.activity} — [`Start`](https://discord.gg/3mwJgnCrZw) a new voice channel activity\n"
+                f"{config.Emoji.Interface.information} — [`View`](https://discord.gg/3mwJgnCrZw) channel information\n"
+                f"{config.Emoji.Interface.increase} — [`Increase`](https://discord.gg/3mwJgnCrZw) the user limit\n"
+                f"{config.Emoji.Interface.decrease} — [`Decrease`](https://discord.gg/3mwJgnCrZw) the user limit\n"
             ),
         )
 
