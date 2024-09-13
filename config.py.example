@@ -1,7 +1,7 @@
-token: str = "MTIwNjMwNjk4MTcwMzQ1MDY1NA.GAWbPo.ZSvynvbu7LBltWyDlBRwTQxQ1jo7HCN2gteBvA"
+token: str = "bot token"
 
 prefix: str = ","
-owners: list[int] = [1202356249975595068, 1124385331827966032, 947204756898713721]
+owners: list[int] = [enter_userid_not_username,userid2]
 
 
 class Color:
@@ -49,8 +49,8 @@ class Webserver:
 
 class Authorization:
     class Spotify:
-        client_id: str = "7a4483c9ae964b8f946ccf4c56d5af25"
-        client_secret: str = "28a9f7417338469e83607aae36ce73fc"
+        client_id: str = "enter client id"
+        client_secret: str = "enter client secret"
 
-    removebg: str = "8QPzgAJfsKBB7xFuifsPVHWh"
-    weather: str = "6c236f9f51e84565be1230647241309"
+    removebg: str = "get api key from remove.bg"
+    weather: str = "get api key from https://www.weatherapi.com/"
