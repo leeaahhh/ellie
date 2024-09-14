@@ -28,7 +28,7 @@
 > **_Note!_** For `Docker` commands we must have it [installed](https://docs.docker.com/engine/install/) in your machine.
 
 <div align=center>
-Start by doing your configuration file by renaming "config.py.example" to "config.py". This is a __**critical**__ step as without this, the bot won't start up at all.
+Start by doing your configuration file by renaming "config.py.example" to "config.py". This is a ***critical*** step as without this, the bot won't start up at all.
 
 You must run these commands in the root of Rei.
 
