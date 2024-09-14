@@ -52,7 +52,7 @@ __**Being on the owners list can allow the person to get your Discord bot token 
 owners: list[int] = [userid1,userid2]
 ```
 
-You can add if you want other API keys for certain commands like RemoveBG, Weather and Spotify.
+You can add if you want other API keys for certain commands like RemoveBG, Weather and Spotify.</div>
 
 ```py
 class Authorization:
@@ -63,6 +63,7 @@ class Authorization:
     removebg: str = "get api key from remove.bg"
     weather: str = "get api key from https://www.weatherapi.com/"
 ```
+<div align=center>
  Now you're done with the configuration file. Make sure to never share this to anyone, no matter who it is. It is strictly confidential.
 
  Now you need to run the bot, it works with a simple command!
