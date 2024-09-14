@@ -1,7 +1,7 @@
 token: str = "bot token"
 
 prefix: str = ","
-owners: list[int] = [enter_userid_not_username,userid2]
+owners: list[int] = [userid1,userid2]
 
 
 class Color:
