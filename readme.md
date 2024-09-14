@@ -1,12 +1,14 @@
  # Rei Ayanami 🤖
 
-![Rei Ayanami](rei-pfp.png)
+<div align=center>
+<img src="rei-pfp.png" width="200" height="200" />
+
 ![GitHub repo size](https://img.shields.io/github/repo-size/NERVCorporation/rei?style=for-the-badge)
 ![GitHub top language](https://img.shields.io/github/languages/top/NERVCorporation/rei?style=for-the-badge)
  ![License](https://camo.githubusercontent.com/d9b03b92063a55cc4391841c05463a86af0d39cac0536757c6602eafb1cbafaa/68747470733a2f2f696d672e736869656c64732e696f2f6769746875622f6c6963656e73652f7361746e61696e672f617374726f2d70617065723f636f6c6f723d253233324633373431267374796c653d666f722d7468652d6261646765)
 
  ![Discord Server](https://discordapp.com/api/guilds/1206246451840294942/widget.png?style=banner2)
-
+</div>
 
  ## 🔥Features
 
@@ -23,11 +25,12 @@
 
 > **_Note!_** For `Docker` commands we must have it [installed](https://docs.docker.com/engine/install/) in your machine.
 
+<div align=center>
 Start by doing your configuration file by renaming "config.py.example" to "config.py". This is a __**critical**__ step as without this, the bot won't start up at all.
 
 You must run these commands in the root of Rei.
 
-```
+```SH
 # Linux (All Distibutions) / MacOS
 mv config.py.example config.py.example
 
@@ -88,7 +91,7 @@ docker rm rei-db
 ```
 
 That's all you need to know for running Rei Ayanami on your personal computer or server! Enjoy!
-
+</div>
 
 
 
