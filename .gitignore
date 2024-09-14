@@ -21,3 +21,6 @@ venv.bak/
 
 docker-compose.yml
 docker-compose.yml
+
+# Config file
+config.py
