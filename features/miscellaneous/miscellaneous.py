@@ -1527,3 +1527,22 @@ class Miscellaneous(Cog):
             embeds.append(embed)
 
         return await ctx.paginate(embeds)
+
+
+    @command(name="oscar", aliases=["doggo", "dog"])
+    async def oscar(self: "Miscellaneous", ctx: Context):
+        """Fetch a random Oscar photo."""
+        async with self.bot.session.get("https://files.nerv.run/") as response:
+            if response.status != 200:
+                return await ctx.error("Failed to fetch Oscar photo.")
+            media_url = await response.text()
+
+        embed = Embed()
+        embed.set_author(name=f"{ctx.author.display_name} [{ctx.author.name}]", icon_url=ctx.author.display_avatar.url)
+        embed.set_image(url=media_url)
+        embed.add_field(name="oscar", value=media_url)
+        embed.set_footer(text=f"{ctx.message.created_at.strftime('%Y-%m-%d %H:%M:%S')} | Oscar")
+
+        await ctx.send(embed=embed)
+
+
