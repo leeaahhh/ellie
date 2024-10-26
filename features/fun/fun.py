@@ -1,8 +1,9 @@
 from asyncio import sleep
 from random import choice, randint
 from typing import Literal
+import aiohttp
 
-from discord import Member
+from discord import (Embed, Member, Color, )
 from discord.ext.commands import (BucketType, command, cooldown, group,
                                   max_concurrency)
 
@@ -405,4 +406,55 @@ class Fun(Cog):
                 await ctx.error(
                     f"You lost the **poker**\n\n > `{cards[0]}` `{cards[1]}`"
                 )
+
+    @command(
+        name="rule34",
+        usage="<tags>",
+        example="tag1 tag2 tag3",
+        aliases=["r34"],
+    )
+    @max_concurrency(1, BucketType.member)
+    async def rule34(self: "Fun", ctx: Context, *, tags: str):
+        """Get a random Rule34 image or video based on given tags"""
+        if not ctx.channel.is_nsfw():
+            return await ctx.error("This command can only be used in NSFW channels.")
+
+        await ctx.load("Searching for content...")
+
+        base_url = "https://api.rule34.xxx/index.php"
+        params = {
+            "page": "dapi",
+            "s": "post",
+            "q": "index",
+            "limit": 100,  # get 100 results for more variety
+            "tags": tags.replace(" ", "+"),
+            "pid": 0  # start from the first page
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(base_url, params=params) as response:
+                if response.status != 200:
+                    return await ctx.error("Failed to fetch content. Please try again later.")
+                
+                content = await response.text()
+
+        # parse XML
+        import xml.etree.ElementTree as ET
+        root = ET.fromstring(content)
+        posts = root.findall('post')
+
+        if not posts:
+            return await ctx.error(f"No results found for the tags: {tags}")
+
+        # get a random post from the results
+        post = choice(posts)
+
+        embed = Embed(title="Rule34 Result", color=Color.random())
+        embed.set_image(url=post.get('file_url'))
+        embed.add_field(name="Score", value=post.get('score'))
+        embed.add_field(name="Tags", value=post.get('tags')[:1024])  # limit tags to 1024 characters
+        embed.set_footer(text=f"Requested by {ctx.author}")
+
+        await ctx.send(embed=embed)
+
 
