@@ -1532,7 +1532,7 @@ class Miscellaneous(Cog):
     @command(name="oscar", aliases=["doggo", "dog"])
     async def oscar(self: "Miscellaneous", ctx: Context):
         """Fetch a random Oscar photo."""
-        async with self.bot.session.get("https://files.nerv.run/") as response:
+        async with self.bot.session.get("https://files.nerv.run/oscar/") as response:
             if response.status != 200:
                 return await ctx.error("Failed to fetch Oscar photo.")
             media_url = await response.text()
@@ -1544,5 +1544,3 @@ class Miscellaneous(Cog):
         embed.set_footer(text=f"{ctx.message.created_at.strftime('%Y-%m-%d %H:%M:%S')} | Oscar")
 
         await ctx.send(embed=embed)
-
-
