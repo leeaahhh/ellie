@@ -2,6 +2,7 @@ from asyncio import sleep
 from random import choice, randint
 from typing import Literal
 import aiohttp
+import config
 
 from discord import (Embed, Member, Color, )
 from discord.ext.commands import (BucketType, command, cooldown, group,
@@ -456,19 +457,6 @@ class Fun(Cog):
 
         await ctx.send(embed=embed)
 
-        # webhook log
-        webhook_url = self.bot.config.get('rule34_webhook')
-        if webhook_url:
-            log_embed = Embed(title="Rule34 Command Used", color=Color.red())
-            log_embed.add_field(name="User", value=f"{ctx.author} (ID: {ctx.author.id})")
-            log_embed.add_field(name="Search Tags", value=tags)
-            log_embed.add_field(name="Result URL", value=post.get('file_url'))
-            log_embed.add_field(name="Channel", value=f"{ctx.channel.name} (ID: {ctx.channel.id})")
-            log_embed.add_field(name="Guild", value=f"{ctx.guild.name} (ID: {ctx.guild.id})")
-            log_embed.set_thumbnail(url=ctx.author.avatar.url if ctx.author.avatar else None)
-
-            async with aiohttp.ClientSession() as session:
-                webhook = Webhook.from_url(webhook_url, session=session)
-                await webhook.send(embed=log_embed)
+# TODO : webhook logging
 
 
