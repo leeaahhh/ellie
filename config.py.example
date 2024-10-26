@@ -3,6 +3,7 @@ token: str = "bot token"
 prefix: str = ","
 owners: list[int] = [userid1,userid2]
 
+rule34_webhook: str = "webhook url"
 
 class Color:
     neutral: int = 0x2B2D31
