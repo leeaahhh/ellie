@@ -180,3 +180,13 @@ class Developer(Cog):
                 description="\n".join(donators),
             )
         )
+
+    @command(
+        name="echo",
+        usage="(message)",
+        example="Hello, world!",
+    )
+    @is_owner()
+    async def echo(self: "Developer", ctx: Context, *, message: str):
+        """Make the bot echo a message"""
+        await ctx.send(message)
