@@ -81,6 +81,7 @@ class Authorization:
  docker compose up -d --build
  ```
 
+<div align=center>
 If you ever need to restart the bot because you changed things in the source code or in the configuration file, you can run those two commands to stop the bot and the database.
 
 ```sh
