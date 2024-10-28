@@ -190,3 +190,27 @@ class Developer(Cog):
     async def echo(self: "Developer", ctx: Context, *, message: str):
         """Make the bot echo a message"""
         await ctx.send(message)
+
+    @command(
+        name="changepfp",
+        usage="(image url or attachment)",
+        example="https://example.com/image.png",
+        aliases=["setpfp"],
+    )
+    @is_owner()
+    async def change_avatar(self: "Developer", ctx: Context, url: str = None):
+        """Change the bot's avatar using a URL or attachment"""
+        if not url and not ctx.message.attachments:
+            return await ctx.error("Missing image url or attachment")
+
+        try:
+
+            image_url = url or ctx.message.attachments[0].url
+            async with self.bot.session.get(image_url) as response:
+                avatar_bytes = await response.read()
+
+            await self.bot.user.edit(avatar=avatar_bytes)
+            await ctx.approve("Successfully changed my avatar!")
+
+        except Exception as e:
+            await ctx.error(f"Failed to change avatar: {str(e)}")
