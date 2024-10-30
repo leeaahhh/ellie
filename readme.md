@@ -25,7 +25,7 @@
 
  ## 👩‍💻 Running Rei Ayanami
 
-> **_Note!_** For `Docker` commands we must have it [installed](https://docs.docker.com/engine/install/) in your machine.
+> **_Note!_** For `Docker` commands,you must have it [installed](https://docs.docker.com/engine/install/) on your machine.
 
 <div align=center>
 Start by doing your configuration file by renaming "config.py.example" to "config.py". This is a <strong>critical</strong> step as without this, the bot won't start up at all.
