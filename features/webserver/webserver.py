@@ -51,7 +51,7 @@ class Webserver(Cog):
             "/",
             lambda _: json_response(
                 {
-                    "commands": self.bot.command_count,
+                    "commands": len(self.bot.commands),
                     "latency": self.bot.latency * 1000,
                     "cache": {
                         "guilds": len(self.bot.guilds),
@@ -131,3 +131,29 @@ class Webserver(Cog):
                 ],
             }
         )
+
+    @route("/commands")
+    async def commands(self: "Webserver", request: Request) -> Response:
+        """Returns information about all registered commands."""
+        return json_response({
+            "count": len(self.bot.commands),
+            "commands": [
+                {
+                    "name": cmd.name,
+                    "category": cmd.cog_name if cmd.cog else None,
+                    "description": cmd.help or cmd.__doc__ or None,  # get description from help/docstring
+                    "aliases": cmd.aliases if hasattr(cmd, 'aliases') else [],
+                    "usage": cmd.usage if hasattr(cmd, 'usage') else None,
+                    "example": cmd.example if hasattr(cmd, 'example') else None,
+                }
+                for cmd in self.bot.commands
+            ]
+        })
+
+    @route("/latency")
+    async def latency(self: "Webserver", request: Request) -> Response:
+        """Returns the bot's current latency."""
+        return json_response({
+            "ws": self.bot.latency * 1000,  # convert to milliseconds
+            "rest": 0, # implement rest api latency check here maybe
+        })
