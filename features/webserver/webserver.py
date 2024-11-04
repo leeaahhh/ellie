@@ -8,6 +8,7 @@ from aiohttp.web import (Application, BaseRequest, Request, Response,
 from aiohttp.web import _run_app as web
 from aiohttp.web import json_response
 from discord.ext.commands import Cog
+from aiohttp.web import middleware
 
 import config
 from tools.managers import logging
@@ -44,8 +45,18 @@ def route(pattern: str, method: str = "GET") -> Callable:
 class Webserver(Cog):
     def __init__(self, bot: rei):
         self.bot: rei = bot
+
+        @middleware
+        async def cors_middleware(request, handler):
+            response = await handler(request)
+            response.headers['Access-Control-Allow-Origin'] = 'https://rei-websitev2.vercel.app, https://rei.nerv.run'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+            return response
+
         self.app = Application(
             logger=log,
+            middlewares=[cors_middleware]
         )
         self.app.router.add_get(
             "/",
