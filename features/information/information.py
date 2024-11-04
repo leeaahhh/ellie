@@ -16,27 +16,89 @@ from tools.managers.context import Context
 from tools.utilities.humanize import comma, ordinal, size
 from tools.utilities.text import Plural, hidden, human_join
 
+import discord
+
 class Information(Cog):
     """Cog for Information commands."""
 
     @command(
         name="help",
         usage="<command>",
-        example="lastfm",
-        aliases=["commands", "h"],
+        example="lastfm", 
+        aliases=["commands", "h", "cmds"],
     )
     async def _help(self, ctx: Context, *, command: str = None):
         """View all commands or information about a command"""
-        if not command:
-            return await ctx.neutral(
-                f"Click [**here**](https://shiro.wtf/commands) to view **{len(set(self.bot.walk_commands()))}** commands"
-            )
+        if command:
+            command_obj: Command | Group = self.bot.get_command(command)
+            if not command_obj:
+                return await ctx.error(f"Command `{command}` does not exist")
+            return await ctx.send_help(command_obj)
 
-        command_obj: Command | Group = self.bot.get_command(command)
-        if not command_obj:
-            return await ctx.error(f"Command `{command}` does not exist")
+        # commands grouped by cog
+        cog_commands = {}
+        for cmd in self.bot.commands:
+            cog_name = cmd.cog_name or "No Category"
+            if cog_name not in cog_commands:
+                cog_commands[cog_name] = []
+            cog_commands[cog_name].append(cmd)
 
-        return await ctx.send_help(command_obj)
+        # embed with dropdown
+        embed = Embed(
+            title="Command Index",
+            description="Select a category from the dropdown below to view commands"
+        )
+
+        # make select menu
+        class CategorySelect(discord.ui.Select):
+            def __init__(self):
+                options = [
+                    discord.SelectOption(
+                        label=cog_name,
+                        value=cog_name.lower(),
+                        description=f"{len(commands)} commands"
+                    )
+                    for cog_name, commands in cog_commands.items()
+                ]
+                super().__init__(
+                    placeholder="Choose a category...",
+                    options=options,
+                    custom_id="help_category"
+                )
+
+            async def callback(self, interaction: discord.Interaction):
+                selected_cog = next(
+                    (cog for cog in cog_commands.keys() 
+                     if cog.lower() == self.values[0]),
+                    None
+                )
+                if selected_cog:
+                    embed.clear_fields()
+                    embed.add_field(
+                        name=selected_cog,
+                        value="\n".join(
+                            f"`{c.name}` - {c.help}"
+                            for c in cog_commands[selected_cog]
+                        ),
+                        inline=False
+                    )
+                    await interaction.response.edit_message(embed=embed)
+
+        # make view and add select menu
+        view = discord.ui.View()
+        view.add_item(CategorySelect())
+
+        first_category = list(cog_commands.keys())[0]
+        embed.add_field(
+            name=first_category,
+            value="\n".join(
+                f"`{c.name}` - {c.help}"
+                for c in cog_commands[first_category]
+            ),
+            inline=False
+        )
+
+        await ctx.send(embed=embed, view=view)
 
     @command(name="ping", aliases=["latency"])
     async def ping(self: "Information", ctx: Context):
@@ -68,7 +130,7 @@ class Information(Cog):
             )
         )
 
-    @command(name="about", aliases=["botinfo", "system", "sys"])
+    @command(name="about", aliases=["botinfo", "system", "sys", "info", "stats"])
     @cooldown(1, 5, BucketType.user)
     async def about(self, ctx: Context):
         """View information about the bot"""
@@ -76,7 +138,7 @@ class Information(Cog):
 
         embed = Embed(
             description=(
-                "Developed by **[@12kg](https://discord.com/users/947204756898713721) and [@wlrc}(https://discord.com/users/1202356249975595068)**"
+                "Developed by **[@12kg](https://discord.com/users/947204756898713721) and [@luciaswag](https://discord.com/users/213743026026184704)**"
                 + f"\n**Memory:** {size(process.memory_full_info().uss)}, **CPU:** {psutil.cpu_percent()}%"
             )
         )
