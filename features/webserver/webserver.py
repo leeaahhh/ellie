@@ -49,7 +49,7 @@ class Webserver(Cog):
         @middleware
         async def cors_middleware(request, handler):
             response = await handler(request)
-            response.headers['Access-Control-Allow-Origin'] = 'https://rei-websitev2.vercel.app'
+            response.headers['Access-Control-Allow-Origin'] = config.Webserver.allowed_domain
             response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
             response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
             return response

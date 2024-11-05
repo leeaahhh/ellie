@@ -44,6 +44,7 @@ class Database:
 class Webserver:
     host: str = "0.0.0.0"
     port: int = 59076
+    allowed_domain: str = "https://rei.nerv.run"
 
 
 class Authorization:
