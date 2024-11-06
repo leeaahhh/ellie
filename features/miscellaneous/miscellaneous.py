@@ -94,7 +94,6 @@ class Miscellaneous(Cog):
         await self.browser.close()
 
     async def cog_load(self: "Miscellaneous"):
-        print(f"[Miscellaneous] Loaded screenshot command: {self.screenshot.name in [c.name for c in self.walk_commands()]}")
         self.reminder.start()
 
     async def cog_unload(self: "Miscellaneous"):
@@ -1425,7 +1424,6 @@ class Miscellaneous(Cog):
                 (
                     f"**{runtime.language}** (`v{runtime.version}`)"
                     + (f" | *{', '.join(runtime.aliases)}*" if runtime.aliases else "")
-                )
                 for runtime in runtimes
             ],
             2000,
