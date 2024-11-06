@@ -1421,9 +1421,8 @@ class Miscellaneous(Cog):
         embeds = []
         for chunk in as_chunks(
             [
-                (
-                    f"**{runtime.language}** (`v{runtime.version}`)"
-                    + (f" | *{', '.join(runtime.aliases)}*" if runtime.aliases else "")
+                f"**{runtime.language}** (`v{runtime.version}`)"
+                + (f" | *{', '.join(runtime.aliases)}*" if runtime.aliases else "")
                 for runtime in runtimes
             ],
             2000,
