@@ -3,6 +3,8 @@ token: str = "bot token"
 prefix: str = ","
 owners: list[int] = [userid1,userid2]
 
+activity: str = "{config.prefix}invite | is it just fantasea?"
+
 class Color:
     neutral: int = 0x2B2D31
     approval: int = 0xA9E97A
