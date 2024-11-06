@@ -28,6 +28,7 @@ from tools.managers import regex
 from tools.managers.cog import Cog
 from tools.managers.context import Context
 from tools.utilities.text import Plural, hash
+import uwuify
 
 
 class Moderation(Cog):
@@ -2491,3 +2492,90 @@ class Moderation(Cog):
             bulk=True,
             reason=f"{ctx.author}: Cleanup",
         )
+
+    @command(
+        name="uwuify",
+        usage="(member) <duration>",
+        example="rei 10m",
+        parameters={
+            "silent": {
+                "require_value": False,
+                "description": "Don't notify the user", 
+                "aliases": ["s"],
+            }
+        },
+    )
+    @has_permissions(manage_messages=True)
+    async def uwuify(
+        self,
+        ctx: Context,
+        member: Member,
+        *,
+        duration: TimeConverter | None = None,
+    ):
+        """Make a member's messages uwu-ified"""
+        await Member().hierarchy(ctx, member)
+
+        if await self.bot.redis.exists(f"uwuify:{ctx.guild.id}:{member.id}"):
+            await self.bot.redis.delete(f"uwuify:{ctx.guild.id}:{member.id}")
+            return await ctx.approve(f"No longer **uwu-ifying** {member.mention}'s messages")
+
+        webhook = None
+        for hook in await ctx.channel.webhooks():
+            if hook.name == "rei-uwu":
+                webhook = hook
+                break
+
+        if not webhook:
+            webhook = await ctx.channel.create_webhook(
+                name="rei-uwu",
+                reason=f"Uwuify webhook created by {ctx.author} ({ctx.author.id})",
+            )
+
+        await self.bot.redis.set(
+            f"uwuify:{ctx.guild.id}:{member.id}",
+            webhook.id,
+            expire=(duration.seconds if duration else None),
+        )
+
+        if not ctx.parameters.get("silent"):
+            await ctx.approve(
+                f"Now **uwu-ifying** {member.mention}'s messages"
+                + (f" for **{duration}**" if duration else "")
+            )
+
+    @Cog.listener("on_message")
+    async def uwuify_listener(self, message: Message):
+        """Listen for messages and uwu-ify them"""
+        if not message.guild or message.author.bot:
+            return
+
+        if not await self.bot.redis.exists(
+            f"uwuify:{message.guild.id}:{message.author.id}"
+        ):
+            return
+
+        webhook_id = await self.bot.redis.get(
+            f"uwuify:{message.guild.id}:{message.author.id}"
+        )
+        webhook = None
+        for hook in await message.channel.webhooks():
+            if hook.id == int(webhook_id):
+                webhook = hook
+                break
+
+        if not webhook:
+            await self.bot.redis.delete(f"uwuify:{message.guild.id}:{message.author.id}")
+            return
+
+        try:
+            uwu_text = uwuify.uwu(message.content, flags=uwuify.SMILEY | uwuify.STUTTER)
+            await message.delete()
+            await webhook.send(
+                content=uwu_text,
+                username=message.author.display_name,
+                avatar_url=message.author.display_avatar.url,
+                allowed_mentions=None,
+            )
+        except Exception as error:
+            print(f"Error in uwuify: {error}")

@@ -25,7 +25,7 @@ class Information(Cog):
         name="help",
         usage="<command>",
         example="lastfm", 
-        aliases=["commands", "h", "cmds"],
+        aliases=["cmds", "h"],
     )
     async def _help(self, ctx: Context, *, command: str = None):
         """View all commands or information about a command"""
