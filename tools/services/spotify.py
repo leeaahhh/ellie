@@ -1,3 +1,5 @@
+# definitely broken
+
 from datetime import timedelta
 
 from asyncspotify import Client as SpotifyClient

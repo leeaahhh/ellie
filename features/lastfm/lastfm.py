@@ -1,3 +1,16 @@
+
+# EVERYTHING BELOW THIS POINT IS BROKEN
+# I'M NOT GOING TO FIX IT
+# I'M NOT GOING TO FIX IT
+# I'M NOT GOING TO FIX IT
+# I'M NOT GOING TO FIX IT
+# I'M NOT GOING TO FIX IT
+# I'M NOT GOING TO FIX IT
+# I'M NOT GOING TO FIX IT
+# I'M NOT GOING TO FIX IT
+# I'M NOT GOING TO FIX IT
+# unless you pay me ;3
+
 from asyncio import gather
 from contextlib import suppress
 from datetime import datetime

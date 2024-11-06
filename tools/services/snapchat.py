@@ -1,3 +1,5 @@
+# not implemented and probably never will be
+
 from datetime import timedelta
 
 from orjson import loads

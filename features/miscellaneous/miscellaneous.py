@@ -8,6 +8,8 @@ from io import BytesIO
 from re import compile as re_compile
 from tempfile import TemporaryDirectory
 from typing import List, Optional
+from discord.ext.commands import flag, Range
+from tools.managers.context import FlagConverter
 
 from aiofiles import open as async_open
 from discord import (CategoryChannel, Embed, File, Forbidden, HTTPException,
@@ -92,6 +94,7 @@ class Miscellaneous(Cog):
         await self.browser.close()
 
     async def cog_load(self: "Miscellaneous"):
+        print(f"[Miscellaneous] Loaded screenshot command: {self.screenshot.name in [c.name for c in self.walk_commands()]}")
         self.reminder.start()
 
     async def cog_unload(self: "Miscellaneous"):
@@ -1320,99 +1323,6 @@ class Miscellaneous(Cog):
                 await ctx.reply(
                     file=File(temp_file_output, filename="reiTransparent.png")
                 )
-
-    @command(
-        name="screenshot",
-        aliases=["ss"],
-        usage="(url) <flags>",
-        example="https://rei.wtf --full-page --delay 5",
-    )
-    @cooldown(1, 5, BucketType.user)
-    async def screenshot(
-        self: "Miscellaneous",
-        ctx: Context,
-        url: URL,
-        *,
-        flags: ScreenshotFlags,
-    ):
-        """Takes a screenshot of a website."""
-
-        if not url.scheme or "." not in url.host:
-            return await ctx.error("The URL provided didn't pass validation!")
-
-        await Domain().convert(ctx, str(url))
-
-        async with ctx.typing():
-            await self.openChrome()
-
-            page = await self.browser.newPage()
-            await page.setViewport(
-                {
-                    "width": 2560,
-                    "height": 1440,
-                }
-            )
-            await page.setUserAgent(
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            )
-
-            try:
-                await page.goto(
-                    url=str(url),
-                    options={
-                        "timeout": 15e3,
-                        "wait_until": "networkidle0",
-                    },
-                )
-            except (PageError, PTimeoutError, NetworkError):
-                await self.exitChrome()
-                return await ctx.error(f"Host [`{url.host}`]({url}) is not reachable!")
-
-            if isinstance(ctx.channel, TextChannel):
-                try:
-                    content = await page.content()
-                except Exception:
-                    await self.exitChrome()
-                    return await ctx.error(
-                        f"Host [`{url.host}`]({url}) is not reachable!"
-                    )
-                if (
-                    any(
-                        keyword in content
-                        for keyword in ["xxx", "hentai", "porn", "gore", "nsfw", "thug"]
-                    )
-                    and not ctx.channel.is_nsfw()
-                ):
-                    await self.exitChrome()
-                    return await ctx.error(
-                        f"Host [`{url.host}`]({url}) contains NSFW content!"
-                    )
-
-            await sleep(flags.delay)
-            buffer: bytes = await page.screenshot(
-                options={
-                    "fullPage": flags.full_page,
-                },
-            )
-            await self.exitChrome()
-
-        embed = Embed(description=f"> [*`{url.host}`*]({url})")
-        embed.set_image(url="attachment://screenshot.png")
-        embed.set_footer(
-            text=(
-                f"Requested by {ctx.author}"
-                + (f" ∙ {delay}s delay" if (delay := flags.delay) else "")
-                + (" ∙ Full page" if flags.full_page else "")
-            ),
-        )
-
-        return await ctx.send(
-            embed=embed,
-            file=File(
-                BytesIO(buffer),
-                filename="screenshot.png",
-            ),
-        )
 
     @group(
         name="compile",

@@ -1,3 +1,5 @@
+# not implemented and probably never will be
+
 from typing import Literal
 
 from pydantic import BaseModel
