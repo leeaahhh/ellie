@@ -42,6 +42,7 @@ class rei(AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(
             command_prefix=self.get_prefix,
+            help_command=None,
             _command=None,
             strip_after_prefix=True,
             case_insensitive=True,
