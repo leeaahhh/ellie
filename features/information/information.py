@@ -24,81 +24,21 @@ class Information(Cog):
     @command(
         name="help",
         usage="<command>",
-        example="lastfm", 
-        aliases=["cmds", "h"],
+        example="lastfm",
+        aliases=["commands", "h"],
     )
     async def _help(self, ctx: Context, *, command: str = None):
         """View all commands or information about a command"""
-        if command:
-            command_obj: Command | Group = self.bot.get_command(command)
-            if not command_obj:
-                return await ctx.error(f"Command `{command}` does not exist")
-            return await ctx.send_help(command_obj)
+        if not command:
+            return await ctx.neutral(
+                f"Click [**here**](https://rei.nerv.run/commands) to view **{len(set(self.bot.walk_commands()))}** commands"
+            )
 
-        # commands grouped by cog
-        cog_commands = {}
-        for cmd in self.bot.commands:
-            cog_name = cmd.cog_name or "No Category"
-            if cog_name not in cog_commands:
-                cog_commands[cog_name] = []
-            cog_commands[cog_name].append(cmd)
+        command_obj: Command | Group = self.bot.get_command(command)
+        if not command_obj:
+            return await ctx.error(f"Command `{command}` does not exist")
 
-        # embed with dropdown
-        embed = Embed(
-            title="Command Index",
-            description="Select a category from the dropdown below to view commands"
-        )
-
-        # make select menu
-        class CategorySelect(discord.ui.Select):
-            def __init__(self):
-                options = [
-                    discord.SelectOption(
-                        label=cog_name,
-                        value=cog_name.lower(),
-                        description=f"{len(commands)} commands"
-                    )
-                    for cog_name, commands in cog_commands.items()
-                ]
-                super().__init__(
-                    placeholder="Choose a category...",
-                    options=options,
-                    custom_id="help_category"
-                )
-
-            async def callback(self, interaction: discord.Interaction):
-                selected_cog = next(
-                    (cog for cog in cog_commands.keys() 
-                     if cog.lower() == self.values[0]),
-                    None
-                )
-                if selected_cog:
-                    embed.clear_fields()
-                    embed.add_field(
-                        name=selected_cog,
-                        value="\n".join(
-                            f"`{c.name}` - {c.help}"
-                            for c in cog_commands[selected_cog]
-                        ),
-                        inline=False
-                    )
-                    await interaction.response.edit_message(embed=embed)
-
-        # make view and add select menu
-        view = discord.ui.View()
-        view.add_item(CategorySelect())
-
-        first_category = list(cog_commands.keys())[0]
-        embed.add_field(
-            name=first_category,
-            value="\n".join(
-                f"`{c.name}` - {c.help}"
-                for c in cog_commands[first_category]
-            ),
-            inline=False
-        )
-
-        await ctx.send(embed=embed, view=view)
+        return await ctx.send_help(command_obj)
 
     @command(name="ping", aliases=["latency"])
     async def ping(self: "Information", ctx: Context):
