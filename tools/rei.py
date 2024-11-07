@@ -25,6 +25,8 @@ from discord.ext.commands import (CooldownMapping, DisabledCommand,
                                   UserNotFound, when_mentioned_or)
 from discord.utils import utcnow
 from orjson import dumps, loads
+from discord.gateway import DiscordWebSocket
+import sys
 
 import config
 from tools.managers import logging
@@ -37,6 +39,46 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+def identify(self):
+    async def _identify():
+        payload = {
+            'op': self.IDENTIFY,
+            'd': {
+                'token': self.token,
+                'properties': {
+                    '$os': 'Android',
+                    '$browser': 'Discord Android',
+                    '$device': 'Discord Android',
+                    '$referrer': '',
+                    '$referring_domain': ''
+                },
+                'compress': True,
+                'large_threshold': 250,
+                'v': 3
+            }
+        }
+
+        if self.shard_id is not None and self.shard_count is not None:
+            payload['d']['shard'] = [self.shard_id, self.shard_count]
+
+        state = self._connection
+        if state._activity is not None or state._status is not None:
+            payload['d']['presence'] = {
+                'status': state._status,
+                'game': state._activity,
+                'since': 0,
+                'afk': False
+            }
+
+        if state._intents is not None:
+            payload['d']['intents'] = state._intents.value
+
+        await self.call_hooks('before_identify', self.shard_id, initial=self._initial_identify)
+        await self.send_as_json(payload)
+    
+    return _identify()
+
+DiscordWebSocket.identify = identify
 
 class rei(AutoShardedBot):
     def __init__(self, *args, **kwargs):
@@ -65,7 +107,7 @@ class rei(AutoShardedBot):
                 name=f"{config.activity}",
                 type=ActivityType.watching,
             ),
-            status=Status.idle,
+            status=Status.online
         )
         self.session: ClientSession
         self.buckets: dict = dict(
@@ -139,6 +181,9 @@ class rei(AutoShardedBot):
                 log.exception(
                     "Failed to load category %s: %s", category.name, exception
                 )
+
+        # Add this line to set mobile status
+        self.http.user_agent = 'Discord iOS'
 
     @property
     def members(self):

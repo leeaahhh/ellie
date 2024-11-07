@@ -5,7 +5,6 @@ from tools.rei import rei
 
 bot = rei()
 
-
 @bot.check
 async def blacklisted(ctx: Context) -> bool:
     """Check if a user is blacklisted"""
@@ -80,3 +79,4 @@ async def disabled_check(ctx: Context) -> bool:
 
 if __name__ == "__main__":
     bot.run()
+
