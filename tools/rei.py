@@ -105,7 +105,7 @@ class rei(AutoShardedBot):
             ),
             activity=Activity(
                 name=f"{config.activity}",
-                type={config.activity_type},
+                type=ActivityType.watching,
             ),
             status=Status.online
         )
