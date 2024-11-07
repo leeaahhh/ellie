@@ -4,6 +4,7 @@ prefix: str = ","
 owners: list[int] = [userid1,userid2]
 
 activity: str = "{config.prefix}invite | is it just fantasea?"
+activity_type: str = "watching" # watching, listening, playing, streaming
 
 class Color:
     neutral: int = 0x2B2D31
