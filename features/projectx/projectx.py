@@ -9,7 +9,7 @@ class ProjectX(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(name="projectx" aliases=["pjx"], invoke_without_command=True)
+    @commands.group(name="projectx", aliases=["pjx"], invoke_without_command=True)
     async def projectx(self, ctx: Context):
         """ProjectX commands."""
         await ctx.send("Use `projectx avatar <userid>` to get the avatar.")
