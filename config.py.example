@@ -5,6 +5,8 @@ owners: list[int] = [userid1,userid2]
 
 activity: str = "{config.prefix}invite | is it just fantasea?"
 
+RobloxSecurity: str = ""
+
 class Color:
     neutral: int = 0x2B2D31
     approval: int = 0xA9E97A
