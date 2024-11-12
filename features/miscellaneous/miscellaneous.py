@@ -1421,8 +1421,9 @@ class Miscellaneous(Cog):
         embeds = []
         for chunk in as_chunks(
             [
-                f"**{runtime.language}** (`v{runtime.version}`)"
-                + (f" | *{', '.join(runtime.aliases)}*" if runtime.aliases else "")
+                (
+                    f"**{runtime.language}** (`v{runtime.version}`)"
+                    + (f" | *{', '.join(runtime.aliases)}*" if runtime.aliases else "")
                 for runtime in runtimes
             ],
             2000,
@@ -1468,3 +1469,9 @@ class Miscellaneous(Cog):
         embed.set_footer(text=f"{ctx.message.created_at.strftime('%Y-%m-%d %H:%M:%S')} | Oscar")
 
         await ctx.send(embed=embed)
+
+        @slash_command(name="ping", description="Check the bot's latency.")
+        async def ping(self, interaction: Interaction):
+            """Check the bot's latency."""
+            latency = self.bot.latency * 1000
+            await interaction.response.send_message(f"Latency: {latency:.2f}ms", ephemeral=True)
