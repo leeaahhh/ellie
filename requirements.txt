@@ -25,3 +25,4 @@ orjson
 pynacl
 aiohttp
 uwuify
+yt-dlp

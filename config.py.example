@@ -3,7 +3,7 @@ token: str = "bot token"
 prefix: str = ","
 owners: list[int] = [userid1,userid2]
 
-activity: str = "{config.prefix}invite | is it just fantasea?"
+activity: str = f"those who know :skull:"
 
 RobloxSecurity: str = ""
 

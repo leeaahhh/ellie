@@ -1424,6 +1424,7 @@ class Miscellaneous(Cog):
                 (
                     f"**{runtime.language}** (`v{runtime.version}`)"
                     + (f" | *{', '.join(runtime.aliases)}*" if runtime.aliases else "")
+                )
                 for runtime in runtimes
             ],
             2000,
@@ -1470,8 +1471,57 @@ class Miscellaneous(Cog):
 
         await ctx.send(embed=embed)
 
-        @slash_command(name="ping", description="Check the bot's latency.")
-        async def ping(self, interaction: Interaction):
-            """Check the bot's latency."""
-            latency = self.bot.latency * 1000
-            await interaction.response.send_message(f"Latency: {latency:.2f}ms", ephemeral=True)
+    @command(
+        name="download",
+        usage="<url>",
+        example="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        aliases=["dl"],
+    )
+    @max_concurrency(1, BucketType.user)
+    async def download(self: "Miscellaneous", ctx: Context, *, url: str):
+        """Download a video from a supported platform"""
+        
+        if not URL(url).host:
+            return await ctx.error("Please provide a valid URL")
+
+        # Get max file size based on boost level
+        max_size = ctx.guild.filesize_limit
+        max_size_mb = max_size / (1024 * 1024)  # Convert to MB
+
+        async with ctx.typing():
+            try:
+                with TemporaryDirectory() as temp_dir:
+                    ydl_opts = {
+                        'format': f'best[filesize<={max_size_mb}M]/bestvideo[filesize<={max_size_mb}M]+bestaudio[filesize<={max_size_mb}M]/best',
+                        'outtmpl': f'{temp_dir}/%(title)s.%(ext)s',
+                        'quiet': True,
+                        'no_warnings': True,
+                        'merge_output_format': 'mp4',
+                        'postprocessors': [{
+                            'key': 'FFmpegVideoConvertor',
+                            'preferedformat': 'mp4',
+                        }],
+                    }
+
+                    import yt_dlp
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        def download_video():
+                            return ydl.extract_info(url, download=True)
+                            
+                        info = await ctx.bot.loop.run_in_executor(None, download_video)
+                        
+                        filepath = ydl.prepare_filename(info)
+                        
+                        if not os.path.exists(filepath):
+                            return await ctx.error(f"Failed to download the video - file must be under {max_size_mb:.1f}MB")
+                            
+                        filesize = os.path.getsize(filepath)
+                        if filesize > max_size:
+                            return await ctx.error(f"Video file is too large to upload ({filesize/1024/1024:.1f}MB > {max_size_mb:.1f}MB)")
+
+                        await ctx.send(
+                            file=File(filepath, filename=f"{info['title']}.mp4")
+                        )
+
+            except Exception as e:
+                await ctx.error(f"An error occurred while downloading: {str(e)}")
