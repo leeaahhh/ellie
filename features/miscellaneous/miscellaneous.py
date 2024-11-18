@@ -14,7 +14,7 @@ from tools.managers.context import FlagConverter
 from aiofiles import open as async_open
 from discord import (CategoryChannel, Embed, File, Forbidden, HTTPException,
                      Member, Message, PartialMessage, Reaction, Status,
-                     TextChannel, User)
+                     TextChannel, User, Interaction)
 from discord.ext.commands import (BucketType, MissingPermissions, Range,
                                   command, cooldown, flag, group,
                                   has_permissions, max_concurrency, param)
@@ -30,6 +30,7 @@ from pyppeteer.errors import NetworkError, PageError
 from pyppeteer.errors import TimeoutError as PTimeoutError
 from xxhash import xxh128_hexdigest
 from yarl import URL
+from discord import app_commands
 
 import config
 from tools.converters.basic import (ImageFinderStrict, Language, SynthEngine,
@@ -46,6 +47,7 @@ from tools.utilities import donator, require_dm, shorten
 from tools.utilities.humanize import human_timedelta
 from tools.utilities.process import ensure_future
 from tools.utilities.text import hash
+
 
 
 class ScreenshotFlags(FlagConverter):
@@ -920,7 +922,7 @@ class Miscellaneous(Cog):
         user = user or ctx.author
 
         names = await self.bot.db.fetch(
-            "SELECT name, timestamp FROM metrics.names WHERE user_id = $1 ORDER BY timestamp DESC",
+            "SELECT name, updated_at FROM metrics.names WHERE user_id = $1 ORDER BY updated_at DESC",
             user.id,
         )
         if not names:
@@ -935,7 +937,7 @@ class Miscellaneous(Cog):
                 title="Name History",
                 description="\n".join(
                     [
-                        f"**{name['name']}** ({format_dt(name['timestamp'], style='R')})"
+                        f"**{name['name']}** ({format_dt(name['updated_at'], style='R')})"
                         for name in names
                     ],
                 ),
@@ -985,44 +987,6 @@ class Miscellaneous(Cog):
         ]
         await ctx.paginate(entries)
 
-    @command(
-        name="urban",
-        usage="(query)",
-        example="self-projecting",
-        aliases=["urbandictionary", "ud"],
-    )
-    async def urban(self: "Miscellaneous", ctx: Context, *, query: str):
-        """Search for a definition on Urban Dictionary"""
-        response = await self.bot.session.request(
-            "GET",
-            "http://api.urbandictionary.com/v0/define",
-            params=dict(term=query),
-        )
-
-        if not response.list:
-            return await ctx.error(f"Couldn't find any definitions for **{query}**")
-
-        def repl(match):
-            word = match.group(2)
-            return f"[{word}](https://{word.replace(' ', '-')}.urbanup.com)"
-
-        entries = [
-            Embed(
-                url=entry.permalink,
-                title=entry.word,
-                description=re_compile(r"(\[(.+?)\])").sub(repl, entry.definition),
-            )
-            .add_field(
-                name="Example",
-                value=re_compile(r"(\[(.+?)\])").sub(repl, entry.example),
-                inline=False,
-            )
-            .set_footer(
-                text=f"👍 {entry.thumbs_up:,} 👎 {entry.thumbs_down:,} - {entry.word}"
-            )
-            for entry in response.list
-        ]
-        await ctx.paginate(entries)
 
     @command(
         name="translate",
@@ -1224,227 +1188,13 @@ class Miscellaneous(Cog):
         result = "\n".join(result)
         return await ctx.approve(f"Copied the **embed code**\n```{result}```")
 
-    @command(
-        name="synth",
-        usage="<engine> (text)",
-        example="ghostface hey mommy",
-        aliases=["synthesizer", "synthesize", "tts"],
-    )
-    async def synth(self, ctx: Context, engine: SynthEngine | None, *, text: str):
-        """Synthesize text into speech"""
-
-        async with ctx.typing():
-            response = await self.bot.session.post(
-                "https://api16-normal-useast5.us.tiktokv.com/media/api/text/speech/invoke/",
-                params=dict(
-                    text_speaker=engine or "en_us_002",
-                    req_text=text.replace("+", "plus")
-                    .replace("-", "minus")
-                    .replace("=", "equals")
-                    .replace("/", "slash")
-                    .replace("@", "at")[:300],
-                    speaker_map_type=0,
-                    aid=1233,
-                ),
-                headers={
-                    "User-Agent": "com.zhiliaoapp.musically/2022600030 (Linux; U; Android 7.1.2; es_ES; SM-G988N; Build/NRD90M;tt-ok/3.12.13.1)",
-                    "Cookie": "sessionid=" + "3797e14bf07c613de9b8b3663a6f2861",
-                },
-            )
-            data = await response.json()
-
-        if data["status_code"] != 0:
-            return await ctx.error("Couldn't **synthesize** text")
-
-        vstr: str = data["data"]["v_str"]
-        _padding = len(vstr) % 4
-        vstr += "=" * _padding
-
-        decoded = b64decode(vstr)
-        clean_data = BytesIO(decoded)
-        clean_data.seek(0)
-
-        file = File(fp=clean_data, filename="Synthesize.mp3")
-        await ctx.reply(file=file)
-
-    @command(
-        name="transparent",
-        usage="(image)",
-        example="dscord.com/chnls/999/..png",
-        aliases=["tp"],
-    )
-    @donator()
-    @cooldown(1, 10, BucketType.user)
-    @max_concurrency(1, BucketType.user)
-    async def transparent(self, ctx: Context, *, image: ImageFinderStrict = None):
-        """Remove the background of an image"""
-        image = image or await ImageFinderStrict.search(ctx)
-
-        async with ctx.typing():
-            response = await self.bot.session.get(image)
-            if sys.getsizeof(response.content) > 15728640:
-                return await ctx.error(
-                    "Image is too large to make **transparent** (max 15MB)"
-                )
-
-            image = await response.read()
-
-            with TemporaryDirectory() as temp_dir:
-                temp_file = os.path.join(
-                    temp_dir,
-                    f"file{hash(str(response.url))}."
-                    + IMAGE_URL.match(str(response.url)).group("mime"),
-                )
-                temp_file_output = os.path.join(
-                    temp_dir,
-                    f"file{hash(str(response.url))}_output."
-                    + IMAGE_URL.match(str(response.url)).group("mime"),
-                )
-                async with async_open(temp_file, "wb") as file:
-                    await file.write(image)
-
-                try:
-                    response = await self.bot.session.post(
-                        "https://api.remove.bg/v1.0/removebg",
-                        headers={"X-API-Key": config.Authorization.removebg},
-                        params=dict(size="auto"),
-                        data=dict(image_file=open(temp_file, "rb")),
-                    )
-                    response.raise_for_status()
-                    async with async_open(temp_file_output, "wb") as file:
-                        await file.write(await response.read())
-                except Exception:
-                    return await ctx.error("Couldn't make image **transparent**")
-
-                if not os.path.exists(temp_file_output):
-                    return await ctx.error("Couldn't make image **transparent**")
-
-                await ctx.reply(
-                    file=File(temp_file_output, filename="reiTransparent.png")
-                )
-
-    @group(
-        name="compile",
-        aliases=[
-            "build",
-            "eval",
-            "run",
-        ],
-        invoke_without_command=True,
-    )
-    async def compile(
-        self: "Miscellaneous",
-        ctx: Context,
-        *,
-        code: Codeblock = param(
-            converter=codeblock_converter,
-            description="The code to compile.",
-        ),
-    ):
-        """
-        Evaluate code through a private Piston instance.
-
-        The language is automatically detected from the codeblock language,
-        if it's not specified, it will default to `python`.
-
-        > Below is a **Hello world** example using `rust` as the language.
-        ```rust
-        fn main() {
-            println!("Hello, world!");
-        }
-        ```
-        """
-
-        async with ctx.typing():
-            language = code.language or "python"
-
-            runtimes: List[Munch] = await self.bot.session.request(
-                "https://emkc.org/api/v2/piston/runtimes",
-            )
-            runtime: Optional[Munch] = find(
-                lambda runtime: (
-                    language.lower() == runtime.language
-                    or language.lower() in runtime.aliases
-                ),
-                runtimes,
-            )
-            if not runtime:
-                return await ctx.error(
-                    f"Couldn't find a runtime for `{code.language}`!"
-                )
-
-            data: PistonExecute = await self.bot.session.request(
-                "POST",
-                "https://emkc.org/api/v2/piston/execute",
-                json={
-                    "language": runtime.language,
-                    "version": runtime.version,
-                    "files": [
-                        {
-                            "name": xxh128_hexdigest(code.content),
-                            "content": code.content,
-                        },
-                    ],
-                },
-            )
-
-        embeds = []
-        for chunk in as_chunks(data.run.output, 2000):
-            chunk = "".join(chunk)
-
-            embed = Embed(
-                description=(
-                    f"> Compiled `{data.language}` code.\n"
-                    f"```{runtime.language}\n{chunk}```"
-                ),
-            )
-            embeds.append(embed)
-
-        if not embeds:
-            return await ctx.error("No output was returned.")
-
-        return await ctx.paginate(embeds)
-
-    @compile.command(
-        name="runtimes",
-        aliases=[
-            "languages",
-            "langs",
-        ],
-    )
-    async def compile_runtimes(self: "Miscellaneous", ctx: Context):
-        """View all available runtimes."""
-        runtimes: List[PistonRuntime] = await self.bot.session.request(
-            "https://emkc.org/api/v2/piston/runtimes",
-        )
-
-        embeds = []
-        for chunk in as_chunks(
-            [
-                (
-                    f"**{runtime.language}** (`v{runtime.version}`)"
-                    + (f" | *{', '.join(runtime.aliases)}*" if runtime.aliases else "")
-                )
-                for runtime in runtimes
-            ],
-            2000,
-        ):
-            embed = Embed(
-                description="\n".join(chunk),
-                title="Available Runtimes",
-            )
-            embeds.append(embed)
-
-        return await ctx.paginate(embeds)
-
-
-    @command(name="oscar", aliases=["doggo", "dog"])
-    async def oscar(self: "Miscellaneous", ctx: Context):
-        """Fetch a random Oscar photo."""
-        async with self.bot.session.get("https://files.nerv.run/oscar/") as response:
-            if response.status != 200:
+    
+    async def _send_oscar_photo(self, ctx):
+        """Helper method to send Oscar photo"""
+        async with self.bot.session.get("https://files.nerv.run/oscar/", allow_redirects=False) as response:
+            if response.status != 302:
                 return await ctx.error("Failed to fetch Oscar photo.")
-            media_url = await response.text()
+            media_url = response.headers["Location"]
 
         embed = Embed()
         embed.set_author(name=f"{ctx.author.display_name} [{ctx.author.name}]", icon_url=ctx.author.display_avatar.url)
@@ -1454,9 +1204,32 @@ class Miscellaneous(Cog):
 
         await ctx.send(embed=embed)
 
+    @command(name="oscar", aliases=["doggo", "dog"])
+    async def oscar_prefix(self: "Miscellaneous", ctx: Context):
+        """Fetch a random Oscar photo."""
+        await self._send_oscar_photo(ctx)
+
+    @app_commands.command(name="oscar", description="Fetch a random Oscar photo")
+    async def oscar_slash(self, interaction: Interaction):
+        """Fetch a random Oscar photo."""
+        async with self.bot.session.get("https://files.nerv.run/oscar/", allow_redirects=False) as response:
+            if response.status != 302:
+                return await interaction.response.send_message("Failed to fetch Oscar photo.", ephemeral=True)
+            media_url = response.headers["Location"]
+
+        embed = Embed()
+        embed.set_author(
+            name=f"{interaction.user.display_name} [{interaction.user.name}]", 
+            icon_url=interaction.user.display_avatar.url
+        )
+        embed.set_image(url=media_url)
+        embed.add_field(name="oscar", value=media_url)
+        embed.set_footer(text=f"{interaction.created_at.strftime('%Y-%m-%d %H:%M:%S')} | Oscar")
+
+        await interaction.response.send_message(embed=embed)
 
     @command(name="pibble", aliases=["gmail"])
-    async def pibble(self: "Miscellaneous", ctx: Context):
+    async def pibble_prefix(self: "Miscellaneous", ctx: Context):
         """Fetch a random Pibble photo."""
         async with self.bot.session.get("https://files.nerv.run/pibble/") as response:
             if response.status != 200:
@@ -1470,6 +1243,25 @@ class Miscellaneous(Cog):
         embed.set_footer(text=f"{ctx.message.created_at.strftime('%Y-%m-%d %H:%M:%S')} | Oscar")
 
         await ctx.send(embed=embed)
+
+    @app_commands.command(name="pibble", description="Fetch a random Pibble photo")
+    async def pibble_slash(self, interaction: Interaction):
+        """Fetch a random Pibble photo."""
+        async with self.bot.session.get("https://files.nerv.run/pibble/") as response:
+            if response.status != 200:
+                return await interaction.response.send_message("Failed to fetch Pibble photo.", ephemeral=True)
+            media_url = await response.text()
+
+        embed = Embed()
+        embed.set_author(
+            name=f"{interaction.user.display_name} [{interaction.user.name}]", 
+            icon_url=interaction.user.display_avatar.url
+        )
+        embed.set_image(url=media_url)
+        embed.add_field(name="pibble", value=media_url)
+        embed.set_footer(text=f"{interaction.created_at.strftime('%Y-%m-%d %H:%M:%S')} | Oscar")
+
+        await interaction.response.send_message(embed=embed)
 
     @command(
         name="download",
@@ -1525,3 +1317,7 @@ class Miscellaneous(Cog):
 
             except Exception as e:
                 await ctx.error(f"An error occurred while downloading: {str(e)}")
+
+
+
+    
