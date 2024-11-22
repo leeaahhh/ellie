@@ -1270,7 +1270,7 @@ class Miscellaneous(Cog):
         aliases=["dl"],
     )
     @max_concurrency(1, BucketType.user)
-    async def download(self: "Miscellaneous", ctx: Context, *, url: str):
+    async def download_prefix(self: "Miscellaneous", ctx: Context, *, url: str):
         """Download a video from a supported platform"""
         
         if not URL(url).host:
@@ -1318,6 +1318,53 @@ class Miscellaneous(Cog):
             except Exception as e:
                 await ctx.error(f"An error occurred while downloading: {str(e)}")
 
+    @app_commands.command(name="download", description="Download a video from a supported platform")
+    @app_commands.describe(url="The URL of the video to download")
+    async def download_slash(self, interaction: Interaction, url: str):
+        """Download a video from a supported platform"""
+        
+        if not URL(url).host:
+            return await interaction.response.send_message("Please provide a valid URL", ephemeral=True)
 
+        # Get max file size based on boost level
+        max_size = interaction.guild.filesize_limit
+        max_size_mb = max_size / (1024 * 1024)  # Convert to MB
 
-    
+        await interaction.response.defer()
+
+        try:
+            with TemporaryDirectory() as temp_dir:
+                ydl_opts = {
+                    'format': f'best[filesize<={max_size_mb}M]/bestvideo[filesize<={max_size_mb}M]+bestaudio[filesize<={max_size_mb}M]/best',
+                    'outtmpl': f'{temp_dir}/%(title)s.%(ext)s',
+                    'quiet': True,
+                    'no_warnings': True,
+                    'merge_output_format': 'mp4',
+                    'postprocessors': [{
+                        'key': 'FFmpegVideoConvertor',
+                        'preferedformat': 'mp4',
+                    }],
+                }
+
+                import yt_dlp
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    def download_video():
+                        return ydl.extract_info(url, download=True)
+                        
+                    info = await interaction.client.loop.run_in_executor(None, download_video)
+                    
+                    filepath = ydl.prepare_filename(info)
+                    
+                    if not os.path.exists(filepath):
+                        return await interaction.followup.send(f"Failed to download the video - file must be under {max_size_mb:.1f}MB", ephemeral=True)
+                        
+                    filesize = os.path.getsize(filepath)
+                    if filesize > max_size:
+                        return await interaction.followup.send(f"Video file is too large to upload ({filesize/1024/1024:.1f}MB > {max_size_mb:.1f}MB)", ephemeral=True)
+
+                    await interaction.followup.send(
+                        file=File(filepath, filename=f"{info['title']}.mp4")
+                    )
+
+        except Exception as e:
+            await interaction.followup.send(f"An error occurred while downloading: {str(e)}", ephemeral=True)
