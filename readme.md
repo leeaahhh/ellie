@@ -10,7 +10,11 @@
  [![Discord Server](https://discordapp.com/api/guilds/1206246451840294942/widget.png?style=banner2)](https://discord.gg/3mwJgnCrZw)
 
 [__**Join my Discord server for updates!**__](https://discord.gg/3mwJgnCrZw)
+
+[__**You can also use our website's source code aswell!**__](https://github.com/leeaahhh/rei-websitev2)
 </div>
+
+
 
  ## 🔥Features
 
@@ -80,19 +84,12 @@ class Authorization:
  # Windows
  docker compose up -d --build
  ```
+ </div>
 
 <div align=center>
 If you ever need to restart the bot because you changed things in the source code or in the configuration file, you can run those two commands to stop the bot and the database.
 
-```sh
-# Linux / MacOS
-sudo docker rm rei-bot
-sudo docker rm rei-db
 
-# Windows
-docker rm rei-bot
-docker rm rei-db
-```
 
 That's all you need to know for running Rei Ayanami on your personal computer or server! Enjoy!
 </div>
