@@ -407,55 +407,33 @@ class Fun(Cog):
                 await ctx.error(
                     f"You lost the **poker**\n\n > `{cards[0]}` `{cards[1]}`"
                 )
-    # @command(
-    #     name="rule34",
-    #     usage="<tags>",
-    #     example="tag1 tag2 tag3",
-    #     aliases=["r34"],
-    # )
-    # @max_concurrency(1, BucketType.member)
-    # async def rule34(self: "Fun", ctx: Context, *, tags: str):
-    #     """Get a random Rule34 image or video based on given tags"""
-    #     if not ctx.channel.is_nsfw():
-    #         return await ctx.error("This command can only be used in NSFW channels.")
 
-    #     await ctx.load("Searching for content...")
+    @command(
+        name="ship",
+        usage="(member1) [member2]",
+        example="igna mars",
+        aliases=["love", "compatibility"]
+    )
+    async def ship(self: "Fun", ctx: Context, member1: Member, member2: Member = None):
+        """Calculate love compatibility between two members"""
+        if member2 is None:
+            member2 = ctx.author
+        
+        if member1 == member2:
+            return await ctx.error("You can't ship someone with themselves!")
 
-    #     base_url = "https://api.rule34.xxx/index.php"
-    #     params = {
-    #         "page": "dapi",
-    #         "s": "post",
-    #         "q": "index",
-    #         "limit": 100,  # get 100 results for more variety
-    #         "tags": tags.replace(" ", "+"),
-    #         "pid": 0  # start from the first page
-    #     }
-
-    #     async with aiohttp.ClientSession() as session:
-    #         async with session.get(base_url, params=params) as response:
-    #             if response.status != 200:
-    #                 return await ctx.error("Failed to fetch content. Please try again later.")
-                
-    #             content = await response.text()
-
-    #     # parse XML
-    #     import xml.etree.ElementTree as ET
-    #     root = ET.fromstring(content)
-    #     posts = root.findall('post')
-
-    #     if not posts:
-    #         return await ctx.error(f"No results found for the tags: {tags}")
-
-    #     # get a random post from the results
-    #     post = choice(posts)
-
-    #     embed = Embed(title="Rule34 Result", color=Color.random())
-    #     embed.set_image(url=post.get('file_url'))
-    #     embed.add_field(name="Score", value=post.get('score'))
-    #     embed.add_field(name="Tags", value=post.get('tags')[:1024])  # limit tags to 1024 characters
-    #     embed.set_footer(text=f"Requested by {ctx.author}")
-
-    #     await ctx.send(embed=embed)
+        # Generate a consistent compatibility percentage based on member IDs
+        compatibility = ((member1.id + member2.id) % 100) + 1
+        
+        # Create heart meter based on compatibility
+        hearts_filled = int(compatibility / 10)
+        meter = "❤" * hearts_filled + "🖤" * (10 - hearts_filled)
+        
+        await ctx.neutral(
+            f"**Love Compatibility:**\n"
+            f"**{member1.name}** x **{member2.name}**\n"
+            f"{meter} **{compatibility}%**"
+        )
 
 # TODO : webhook logging
 
