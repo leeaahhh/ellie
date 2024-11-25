@@ -129,7 +129,7 @@ class GitHub(Cog):
             except Exception as e:
                 print(f"Error in commit watcher: {e}")
                 
-            await asyncio.sleep(60)  # Check every minute
+            await asyncio.sleep(2)
 
     @group(
         name="commits",
@@ -148,18 +148,17 @@ class GitHub(Cog):
     @has_permissions(manage_guild=True)
     async def commits_watch(self, ctx: Context, channel: TextChannel, *, repository: str):
         """Watch a repository for new commits"""
-        # Verify repository exists
+        # clearly retarded if you put a repository that doesn't exist
         async with aiohttp.ClientSession() as session:
             async with session.get(f"{self.api_url}/repos/{repository}") as response:
                 if response.status != 200:
                     return await ctx.error("Repository not found")
                 
-                # Get latest commit for initial state
                 latest_commit = await self.get_latest_commit(session, repository)
                 if not latest_commit:
                     return await ctx.error("Could not fetch repository commits")
                 
-                # Add to watch list
+                # i hate psql on god
                 await self.bot.db.execute(
                     """
                     INSERT INTO github_watches (guild_id, channel_id, repository, last_commit_sha)
