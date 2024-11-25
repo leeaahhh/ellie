@@ -1,15 +1,228 @@
 from typing import Optional
-from discord.ext.commands import Cog, command, Context
-from discord import Embed
+from discord.ext.commands import Cog, command, Context, group, has_permissions
+from discord import Embed, TextChannel
 import aiohttp
 from datetime import datetime
 import config
+import asyncio
 
 class GitHub(Cog):
     def __init__(self, bot):
         self.bot = bot
         self.api_url = "https://api.github.com"
+        self.watching = True
+        self.bot.loop.create_task(self.watch_commits())
         
+    async def get_latest_commit(self, session: aiohttp.ClientSession, repo: str):
+        """Fetch the latest commit from a repository"""
+        async with session.get(f"{self.api_url}/repos/{repo}/commits") as response:
+            if response.status == 200:
+                commits = await response.json()
+                return commits[0] if commits else None
+            return None
+
+    async def format_commit_changes(self, session: aiohttp.ClientSession, repo: str, commit_sha: str):
+        """Format the file changes for a commit"""
+        async with session.get(f"{self.api_url}/repos/{repo}/commits/{commit_sha}") as response:
+            if response.status != 200:
+                return "No changes available"
+                
+            data = await response.json()
+            files = data.get('files', [])
+            
+            if not files:
+                return "No changes available"
+                
+            formatted_changes = []
+            for file in files:
+                filename = file['filename']
+                changes = []
+                
+                # Get file extension for syntax highlighting
+                ext = filename.split('.')[-1] if '.' in filename else 'txt'
+                
+                changes.append(f"```{ext}\n{filename}\n")
+                
+                if file.get('additions'):
+                    changes.append(f"+ {file['additions']} additions")
+                if file.get('deletions'):
+                    changes.append(f"- {file['deletions']} deletions")
+                    
+                changes.append("```")
+                formatted_changes.append('\n'.join(changes))
+                
+            return '\n'.join(formatted_changes[:3])  # Limit to 3 files to avoid length issues
+
+    async def watch_commits(self):
+        """Background task to watch for new commits"""
+        await self.bot.wait_until_ready()
+        
+        while self.watching:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    # Get all watched repositories
+                    watches = await self.bot.db.fetch(
+                        "SELECT * FROM github_watches"
+                    )
+                    
+                    for watch in watches:
+                        latest_commit = await self.get_latest_commit(session, watch['repository'])
+                        
+                        if not latest_commit:
+                            continue
+                            
+                        # Check if this is a new commit
+                        if latest_commit['sha'] != watch['last_commit_sha']:
+                            # Update the last commit SHA
+                            await self.bot.db.execute(
+                                """
+                                UPDATE github_watches 
+                                SET last_commit_sha = $1 
+                                WHERE guild_id = $2 AND repository = $3
+                                """,
+                                latest_commit['sha'],
+                                watch['guild_id'],
+                                watch['repository']
+                            )
+                            
+                            # Format and send commit message
+                            channel = self.bot.get_channel(watch['channel_id'])
+                            if channel:
+                                commit = latest_commit
+                                author = commit['author'] or commit['commit']['author']
+                                
+                                embed = Embed(
+                                    color=config.Color.neutral,
+                                    title=f"New Commit to {watch['repository']}",
+                                    description=f"```\n{commit['commit']['message']}\n```",
+                                    url=commit['html_url']
+                                )
+                                
+                                embed.set_author(
+                                    name=author.get('login', author.get('name', 'Unknown')),
+                                    icon_url=author.get('avatar_url', None),
+                                    url=author.get('html_url', None)
+                                )
+                                
+                                embed.add_field(
+                                    name="Date",
+                                    value=f"<t:{int(datetime.strptime(commit['commit']['author']['date'], '%Y-%m-%dT%H:%M:%SZ').timestamp())}:R>",
+                                    inline=False
+                                )
+                                
+                                changes = await self.format_commit_changes(session, watch['repository'], commit['sha'])
+                                if changes:
+                                    embed.add_field(
+                                        name="Changes",
+                                        value=changes,
+                                        inline=False
+                                    )
+                                
+                                await channel.send(embed=embed)
+                
+            except Exception as e:
+                print(f"Error in commit watcher: {e}")
+                
+            await asyncio.sleep(60)  # Check every minute
+
+    @group(
+        name="commits",
+        aliases=["commit"],
+        invoke_without_command=True
+    )
+    async def commits(self, ctx: Context):
+        """Manage commit tracking for repositories"""
+        await ctx.send_help()
+
+    @commits.command(
+        name="watch",
+        usage="(channel) (repository)",
+        example="#github-commits NERVCorporation/rei"
+    )
+    @has_permissions(manage_guild=True)
+    async def commits_watch(self, ctx: Context, channel: TextChannel, *, repository: str):
+        """Watch a repository for new commits"""
+        # Verify repository exists
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{self.api_url}/repos/{repository}") as response:
+                if response.status != 200:
+                    return await ctx.error("Repository not found")
+                
+                # Get latest commit for initial state
+                latest_commit = await self.get_latest_commit(session, repository)
+                if not latest_commit:
+                    return await ctx.error("Could not fetch repository commits")
+                
+                # Add to watch list
+                await self.bot.db.execute(
+                    """
+                    INSERT INTO github_watches (guild_id, channel_id, repository, last_commit_sha)
+                    VALUES ($1, $2, $3, $4)
+                    ON CONFLICT (guild_id, repository) 
+                    DO UPDATE SET channel_id = $2, last_commit_sha = $4
+                    """,
+                    ctx.guild.id,
+                    channel.id,
+                    repository,
+                    latest_commit['sha']
+                )
+                
+                await ctx.approve(f"Now watching **{repository}** in {channel.mention}")
+
+    @commits.command(
+        name="unwatch",
+        usage="(repository)",
+        example="NERVCorporation/rei"
+    )
+    @has_permissions(manage_guild=True)
+    async def commits_unwatch(self, ctx: Context, *, repository: str):
+        """Stop watching a repository"""
+        # Remove from watch list
+        result = await self.bot.db.execute(
+            """
+            DELETE FROM github_watches
+            WHERE guild_id = $1 AND repository = $2
+            """,
+            ctx.guild.id,
+            repository
+        )
+        
+        if result == "DELETE 0":
+            return await ctx.error(f"Was not watching **{repository}**")
+            
+        await ctx.approve(f"Stopped watching **{repository}**")
+
+    @commits.command(
+        name="list",
+        aliases=["show"]
+    )
+    async def commits_list(self, ctx: Context):
+        """List all watched repositories"""
+        watches = await self.bot.db.fetch(
+            """
+            SELECT repository, channel_id
+            FROM github_watches
+            WHERE guild_id = $1
+            """,
+            ctx.guild.id
+        )
+        
+        if not watches:
+            return await ctx.error("No repositories are being watched")
+            
+        description = "\n".join(
+            f"• {watch['repository']} in <#{watch['channel_id']}>"
+            for watch in watches
+        )
+        
+        embed = Embed(
+            color=config.Color.neutral,
+            title="Watched Repositories",
+            description=description
+        )
+        
+        await ctx.send(embed=embed)
+
     @command(
         name="github",
         aliases=["git"],

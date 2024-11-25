@@ -337,3 +337,12 @@ CREATE TABLE IF NOT EXISTS metrics.avatars (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     PRIMARY KEY (user_id, avatar)
 );
+
+--- GitHub
+CREATE TABLE IF NOT EXISTS github_watches (
+    guild_id BIGINT,
+    channel_id BIGINT,
+    repository TEXT,
+    last_commit_sha TEXT,
+    PRIMARY KEY (guild_id, repository)
+);

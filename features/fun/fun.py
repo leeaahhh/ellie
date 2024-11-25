@@ -412,7 +412,6 @@ class Fun(Cog):
                 await ctx.error(
                     f"You lost the **poker**\n\n > `{cards[0]}` `{cards[1]}`"
                 )
-<<<<<<< HEAD
     @group(
         name="lovense",
         usage="<subcommand>",
@@ -543,22 +542,6 @@ class Fun(Cog):
             f"**{member.name}** is **{percentage}%** gay\n"
             f"[{filled}{empty}]"
         )
-
-
-
-    # @command(
-    #     name="rule34",
-    #     usage="<tags>",
-    #     example="tag1 tag2 tag3",
-    #     aliases=["r34"],
-    # )
-    # @max_concurrency(1, BucketType.member)
-    # async def rule34(self: "Fun", ctx: Context, *, tags: str):
-    #     """Get a random Rule34 image or video based on given tags"""
-    #     if not ctx.channel.is_nsfw():
-    #         return await ctx.error("This command can only be used in NSFW channels.")
-=======
->>>>>>> 0e32accf4b26e23dbe6cbfe7faf24faf551e7888
 
     @command(
         name="ship",
