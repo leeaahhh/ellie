@@ -3,6 +3,11 @@ from random import choice, randint
 from typing import Literal
 import aiohttp
 import config
+import io
+import discord
+from discord import File
+from PIL import Image, ImageDraw, ImageFont
+import os
 
 from discord import (Embed, Member, Color, )
 from discord.ext.commands import (BucketType, command, cooldown, group,
@@ -407,6 +412,7 @@ class Fun(Cog):
                 await ctx.error(
                     f"You lost the **poker**\n\n > `{cards[0]}` `{cards[1]}`"
                 )
+<<<<<<< HEAD
     @group(
         name="lovense",
         usage="<subcommand>",
@@ -551,44 +557,124 @@ class Fun(Cog):
     #     """Get a random Rule34 image or video based on given tags"""
     #     if not ctx.channel.is_nsfw():
     #         return await ctx.error("This command can only be used in NSFW channels.")
+=======
+>>>>>>> 0e32accf4b26e23dbe6cbfe7faf24faf551e7888
 
-    #     await ctx.load("Searching for content...")
+    @command(
+        name="ship",
+        usage="(member1) [member2]",
+        example="igna mars",
+        aliases=["love", "compatibility"]
+    )
+    async def ship(self: "Fun", ctx: Context, member1: Member, member2: Member = None):
+        """Calculate love compatibility between two members"""
+        if member2 is None:
+            member2 = ctx.author
+        
+        if member1 == member2:
+            return await ctx.error("You can't ship someone with themselves!")
 
-    #     base_url = "https://api.rule34.xxx/index.php"
-    #     params = {
-    #         "page": "dapi",
-    #         "s": "post",
-    #         "q": "index",
-    #         "limit": 100,  # get 100 results for more variety
-    #         "tags": tags.replace(" ", "+"),
-    #         "pid": 0  # start from the first page
-    #     }
+        # Generate a consistent compatibility percentage based on member IDs
+        compatibility = ((member1.id + member2.id) % 100) + 1
+        
+        # Create embed
+        embed = Embed(
+            title="💕 Love Calculator 💕",
+            description=f"**{member1.name}** x **{member2.name}**\n**{compatibility}%**",
+            color=Color.pink()
+        )
 
-    #     async with aiohttp.ClientSession() as session:
-    #         async with session.get(base_url, params=params) as response:
-    #             if response.status != 200:
-    #                 return await ctx.error("Failed to fetch content. Please try again later.")
+        # Download avatars
+        async with aiohttp.ClientSession() as session:
+            async with session.get(str(member1.display_avatar.url)) as resp:
+                avatar1_data = await resp.read()
+            async with session.get(str(member2.display_avatar.url)) as resp:
+                avatar2_data = await resp.read()
+
+        def create_circular_mask(size):
+            mask = Image.new('L', size, 0)
+            draw = ImageDraw.Draw(mask)
+            draw.ellipse((0, 0) + size, fill=255)
+            return mask
+
+        # Create the ship image
+        with Image.open(io.BytesIO(avatar1_data)) as avatar1_img, \
+             Image.open(io.BytesIO(avatar2_data)) as avatar2_img, \
+             Image.open("assets/heart.png") as heart_img:
+            
+            # Resize avatars to 128x128
+            size = (128, 128)
+            avatar1_img = avatar1_img.convert('RGBA').resize(size)
+            avatar2_img = avatar2_img.convert('RGBA').resize(size)
+            
+            # Create circular mask and apply to avatars
+            mask = create_circular_mask(size)
+            avatar1_circle = Image.new('RGBA', size, (0, 0, 0, 0))
+            avatar2_circle = Image.new('RGBA', size, (0, 0, 0, 0))
+            avatar1_circle.paste(avatar1_img, (0, 0), mask)
+            avatar2_circle.paste(avatar2_img, (0, 0), mask)
+            
+            # Create base image (adjusted width)
+            base = Image.new('RGBA', (350, 170), (0, 0, 0, 0))
+            
+            # Calculate positions for closer avatars
+            avatar1_pos = (30, 0)
+            avatar2_pos = (192, 0)
+            
+            # Create progress bar (thinner and lower)
+            bar_width = 200
+            bar_height = 16
+            bar_pos = (75, 140)  # Positioned under avatars
+            
+            # Draw background bar
+            draw = ImageDraw.Draw(base)
+            draw.rectangle(
+                (bar_pos[0], bar_pos[1], bar_pos[0] + bar_width, bar_pos[1] + bar_height),
+                fill=(100, 100, 100, 255),
+                outline=(255, 255, 255, 255),
+                width=1
+            )
+            
+            # Draw filled portion based on compatibility
+            filled_width = int(bar_width * (compatibility / 100))
+            draw.rectangle(
+                (bar_pos[0], bar_pos[1], bar_pos[0] + filled_width, bar_pos[1] + bar_height),
+                fill=(255, 192, 203, 255)  # Pink fill
+            )
+            
+            # Add percentage text on slider
+            try:
+                font = ImageFont.truetype("assets/font.ttf", 20)  # You'll need to add a font file
+            except:
+                font = ImageFont.load_default()
                 
-    #             content = await response.text()
-
-    #     # parse XML
-    #     import xml.etree.ElementTree as ET
-    #     root = ET.fromstring(content)
-    #     posts = root.findall('post')
-
-    #     if not posts:
-    #         return await ctx.error(f"No results found for the tags: {tags}")
-
-    #     # get a random post from the results
-    #     post = choice(posts)
-
-    #     embed = Embed(title="Rule34 Result", color=Color.random())
-    #     embed.set_image(url=post.get('file_url'))
-    #     embed.add_field(name="Score", value=post.get('score'))
-    #     embed.add_field(name="Tags", value=post.get('tags')[:1024])  # limit tags to 1024 characters
-    #     embed.set_footer(text=f"Requested by {ctx.author}")
-
-    #     await ctx.send(embed=embed)
+            text = f"{compatibility}%"
+            text_bbox = draw.textbbox((0, 0), text, font=font)
+            text_width = text_bbox[2] - text_bbox[0]
+            text_x = bar_pos[0] + (bar_width - text_width) // 2
+            text_y = bar_pos[1] + (bar_height - text_bbox[3]) // 2
+            draw.text((text_x, text_y), text, font=font, fill=(255, 255, 255, 255))
+            
+            # Paste avatars
+            base.paste(avatar1_circle, avatar1_pos)
+            base.paste(avatar2_circle, avatar2_pos)
+            
+            # Resize heart and paste in middle of progress bar
+            heart_size = (48, 48)
+            heart_img = heart_img.resize(heart_size)
+            heart_pos = (bar_pos[0] + (bar_width // 2) - (heart_size[0] // 2), 
+                        bar_pos[1] - (heart_size[1] // 2))
+            base.paste(heart_img, heart_pos, heart_img)
+            
+            # Save to buffer
+            buffer = io.BytesIO()
+            base.save(buffer, 'PNG')
+            buffer.seek(0)
+            
+            # Send embed with image
+            file = File(buffer, 'ship.png')
+            embed.set_image(url="attachment://ship.png")
+            await ctx.send(embed=embed, file=file)
 
 # TODO : webhook logging
 
