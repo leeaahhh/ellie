@@ -6,7 +6,7 @@ import config
 
 from discord import (Embed, Member, Color, )
 from discord.ext.commands import (BucketType, command, cooldown, group,
-                                  max_concurrency)
+                                  max_concurrency, is_owner)
 
 from tools import services
 from tools.managers.cog import Cog
@@ -407,6 +407,139 @@ class Fun(Cog):
                 await ctx.error(
                     f"You lost the **poker**\n\n > `{cards[0]}` `{cards[1]}`"
                 )
+    @group(
+        name="lovense",
+        usage="<subcommand>",
+        example="power 75",
+        aliases=["dildo", "vibrator"],
+        invoke_without_command=True
+    )
+    async def lovense(self: "Fun", ctx: Context):
+        """Control a virtual device"""
+        await ctx.send_help(ctx.command)
+
+    @lovense.command(
+        name="power",
+        usage="<level>",
+        example="75"
+    )
+    @max_concurrency(1, BucketType.member)
+    async def lovense_power(self: "Fun", ctx: Context, power: int):
+        """Control the power level of the virtual device"""
+        if not hasattr(self, "device_status"):
+            self.device_status = False
+
+        if not self.device_status:
+            return await ctx.error("Device is currently powered off! Owner must turn it on first.")
+
+        if not 0 <= power <= 100:
+            return await ctx.error("Power must be between 0 and 100!")
+
+        await ctx.load(f"Setting power to **{power}%**...")
+
+        if power == 0:
+            message = "Device powered down"
+            emoji = "💤"
+        elif power < 25:
+            message = "Low vibration mode"
+            emoji = "📉" 
+        elif power < 50:
+            message = "Medium vibration mode"
+            emoji = "📊"
+        elif power < 75:
+            message = "High vibration mode" 
+            emoji = "📈"
+        else:
+            message = "MAXIMUM POWER MODE"
+            emoji = "⚡"
+
+        filled = "▰" * (power // 10)
+        empty = "▱" * ((100 - power) // 10)
+        
+        await ctx.approve(
+            f"{emoji} **{message}**\n"
+            f"> Power: [{filled}{empty}] {power}%"
+        )
+
+    @lovense.command(name="on")
+    @is_owner()
+    async def lovense_on(self: "Fun", ctx: Context):
+        """Turn on the virtual device (Owner only)"""
+        if hasattr(self, "device_status") and self.device_status:
+            return await ctx.error("Device is already powered on!")
+        
+        self.device_status = True
+        await ctx.approve("Device powered on and ready for use! 🟢")
+
+    @lovense.command(name="off")
+    @is_owner()
+    async def lovense_off(self: "Fun", ctx: Context):
+        """Turn off the virtual device (Owner only)"""
+        if not hasattr(self, "device_status") or not self.device_status:
+            return await ctx.error("Device is already powered off!")
+        
+        self.device_status = False
+        await ctx.approve("Device powered off! 🔴")
+
+    @command(
+        name="howbig",
+        usage="<member>",
+        example="@user",
+        aliases=["size", "length"]
+    )
+    @cooldown(1, 10, BucketType.member)
+    async def howbig(self: "Fun", ctx: Context, member: Member = None):
+        """Check how big someone is"""
+        member = member or ctx.author
+        
+        #consistent random size for each user
+        if await self.bot.is_owner(member):
+            size = 50
+        else:
+            seed = member.id % 35
+            size = seed + 1  # 1-36 range
+        
+        shaft = "=" * size
+        tip = "Đ"
+        
+        await ctx.neutral(
+            f"**{member.name}**'s size:\n"
+            f"# 8{shaft}{tip} ({size + 3}cm)"
+        )
+
+    @command(
+        name="howgay",
+        usage="<member>",
+        example="@user",
+        aliases=["gay"]
+    )
+    @cooldown(1, 10, BucketType.member)
+    async def howgay(self: "Fun", ctx: Context, member: Member = None):
+        """Check how gay someone is"""
+        member = member or ctx.author
+
+        gay_levels = {
+            947204756898713721: 101,  # userid: percentage,
+            945104190617845790: 999,
+        }
+        
+        # consistent percentage
+        if member.id in gay_levels:
+            percentage = gay_levels[member.id]
+        else:
+            seed = member.id % 101
+            percentage = seed
+        
+        filled = "█" * (percentage // 10) 
+        empty = "░" * ((100 - percentage) // 10)
+        
+        await ctx.neutral(
+            f"**{member.name}** is **{percentage}%** gay\n"
+            f"[{filled}{empty}]"
+        )
+
+
+
     # @command(
     #     name="rule34",
     #     usage="<tags>",
