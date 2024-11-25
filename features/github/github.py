@@ -36,22 +36,28 @@ class GitHub(Cog):
             formatted_changes = []
             for file in files:
                 filename = file['filename']
-                changes = []
+                patch = file.get('patch', '')
                 
+                if not patch:
+                    continue
+                    
                 # Get file extension for syntax highlighting
                 ext = filename.split('.')[-1] if '.' in filename else 'txt'
                 
-                changes.append(f"```{ext}\n{filename}\n")
-                
-                if file.get('additions'):
-                    changes.append(f"+ {file['additions']} additions")
-                if file.get('deletions'):
-                    changes.append(f"- {file['deletions']} deletions")
-                    
-                changes.append("```")
+                # Format the changes with the diff
+                changes = [
+                    f"```diff\n# {filename}",
+                    patch,
+                    "```"
+                ]
                 formatted_changes.append('\n'.join(changes))
                 
-            return '\n'.join(formatted_changes[:3])  # Limit to 3 files to avoid length issues
+            # Limit the total length to avoid Discord's message limit
+            result = '\n'.join(formatted_changes[:3])  # Limit to 3 files
+            if len(result) > 1000:  # Arbitrary limit to ensure it fits in embed
+                result = result[:997] + "..."
+                
+            return result
 
     async def watch_commits(self):
         """Background task to watch for new commits"""
