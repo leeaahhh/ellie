@@ -7,6 +7,7 @@ services:
     container_name: rei-bot
     depends_on:
       - db
+      - lavalink
     ports:
       - "59076:59076"
     restart: unless-stopped
@@ -26,6 +27,17 @@ services:
     restart: always
     volumes:
       - data:/var/lib/postgresql/data
+
+  lavalink:
+    container_name: rei-lavalink
+    environment:
+      - _JAVA_OPTIONS=-Xmx8G
+      - LAVALINK_SERVER_PASSWORD=youshallnotpass
+      - SERVER_PORT=2333
+    image: ghcr.io/lavalink-devs/lavalink:4
+    expose:
+      - "2333"
+    restart: unless-stopped
 
 volumes:
   data:

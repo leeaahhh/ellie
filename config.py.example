@@ -54,5 +54,11 @@ class Authorization:
         client_id: str = "enter client id"
         client_secret: str = "enter client secret"
 
+    class Lavalink:
+        host: str = "rei-lavalink"
+        port: int = 2333
+        password: str = "youshallnotpass"
+        secure: bool = False
+
     removebg: str = "get api key from remove.bg"
     weather: str = "get api key from https://www.weatherapi.com/"

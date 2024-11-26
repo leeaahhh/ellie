@@ -129,7 +129,7 @@ class GitHub(Cog):
             except Exception as e:
                 print(f"Error in commit watcher: {e}")
                 
-            await asyncio.sleep(2)
+            await asyncio.sleep(60)
 
     @group(
         name="commits",
