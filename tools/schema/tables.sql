@@ -28,7 +28,21 @@ CREATE TABLE IF NOT EXISTS donators (
 CREATE TABLE IF NOT EXISTS marriages (
     user_id BIGINT,
     partner_id BIGINT,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     PRIMARY KEY (user_id)
+);
+
+CREATE TABLE IF NOT EXISTS family_relationships (
+    child_id BIGINT,
+    parent_id BIGINT,
+    timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (child_id, parent_id)
+);
+
+CREATE TABLE IF NOT EXISTS guild_settings (
+    guild_id BIGINT,
+    allow_incest BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (guild_id)
 );
 
 CREATE TABLE IF NOT EXISTS blunt (

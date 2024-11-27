@@ -2,7 +2,7 @@ FROM python:3.11-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache chromium ffmpeg bash
+RUN apk add --no-cache chromium ffmpeg bash font-liberation ttf-dejavu
 RUN apk add --no-cache --virtual .build-deps musl-dev libffi-dev gcc git
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
