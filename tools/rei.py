@@ -425,7 +425,11 @@ class rei(AutoShardedBot):
             elif isinstance(error.original, Forbidden):
                 await ctx.error("I don't have **permission** to do that")
             elif isinstance(error.original, ClientConnectorError):
-                await ctx.error("The **API** is currently **unavailable**")
+                try:
+                    await ctx.error("The **API** is currently **unavailable**")
+                except Exception as e:
+                    log.error("Failed to send API unavailable message: %s", str(e))
+                    return
             elif isinstance(error.original, ContentTypeError):
                 await ctx.error("The **API** returned a **malformed response**")
             else:
