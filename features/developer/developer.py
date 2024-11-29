@@ -214,3 +214,51 @@ class Developer(Cog):
 
         except Exception as e:
             await ctx.error(f"Failed to change avatar: {str(e)}")
+
+    @command(
+        name="reactspam",
+        aliases=["r"],
+    )
+    @is_owner()
+    async def react_spam(self: "Developer", ctx: Context):
+        """React spam a message"""
+        if not ctx.message.reference:
+            return await ctx.error("You need to reply to a message")
+            
+        message = ctx.message.reference.resolved
+        if not message:
+            return await ctx.error("Could not find the referenced message or it is not accessible")
+            
+        try:
+            await ctx.message.delete()
+        except Exception as e:
+            return await ctx.error(f"Failed to delete the command message: {str(e)}")
+
+        emojis = [
+            "1311864927127998536",  # skull
+            "1311864834119307315",
+            "1311864789622067303",
+            "1311864733959192646",
+            "1311864461216448562",
+            "1311864257545113630",
+            "1311863824911171614",
+            "1311863401286209576",
+            "1311863095932747799",
+            "1311862985884448839",
+            "1311862785453592686",
+            "1311862675405297684",
+            "1311862495127928832",
+            "1311865277415166083",  # laugh
+            "1311865207882252408",
+            "1311865150437064765"
+        ]
+        
+        for emoji_id in emojis:
+            try:
+                emoji = self.bot.get_emoji(int(emoji_id))
+                if emoji:
+                    await message.add_reaction(emoji)
+                else:
+                    await ctx.error(f"Could not find emoji with ID: {emoji_id}")
+            except Exception as e:
+                await ctx.error(f"Failed to add reaction {emoji_id}: {str(e)}")

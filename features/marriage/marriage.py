@@ -423,6 +423,31 @@ class Marriage(Cog):
         )
         return await ctx.neutral(f"**{parent.name}** has forcefully made **{child.name}** their child")
 
+    @command(name="toggleincest", aliases=["incest"])
+    @has_permissions(manage_guild=True)
+    async def toggle_incest(self, ctx: Context):
+        """Toggle whether family members can marry each other (Manage Guild required)"""
+        current_setting = await self.bot.db.fetchval(
+            "SELECT allow_incest FROM guild_settings WHERE guild_id = $1",
+            ctx.guild.id
+        )
+        
+        new_setting = not current_setting if current_setting is not None else True
+        
+        await self.bot.db.execute(
+            """
+            INSERT INTO guild_settings (guild_id, allow_incest)
+            VALUES ($1, $2)
+            ON CONFLICT (guild_id) 
+            DO UPDATE SET allow_incest = $2
+            """,
+            ctx.guild.id,
+            new_setting
+        )
+        
+        status = "enabled" if new_setting else "disabled"
+        return await ctx.neutral(f"Family marriage has been **{status}** for this server")
+
     async def _get_all_relationships(self, user_id: int, processed: Set[int] = None) -> Dict:
         """Recursively fetch all family relationships"""
         if processed is None:
