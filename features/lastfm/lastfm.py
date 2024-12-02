@@ -1,16 +1,4 @@
-
-# EVERYTHING BELOW THIS POINT IS BROKEN
-# I'M NOT GOING TO FIX IT
-# I'M NOT GOING TO FIX IT
-# I'M NOT GOING TO FIX IT
-# I'M NOT GOING TO FIX IT
-# I'M NOT GOING TO FIX IT
-# I'M NOT GOING TO FIX IT
-# I'M NOT GOING TO FIX IT
-# I'M NOT GOING TO FIX IT
-# I'M NOT GOING TO FIX IT
-# unless you pay me ;3
-
+# TODO: update usage to 3.10 + add slash commands
 from asyncio import gather
 from contextlib import suppress
 from datetime import datetime
@@ -41,7 +29,7 @@ class lastfm(Cog):
 
     async def request(self, path: str, payload: dict):
         response = await self.bot.session.get(
-            f"https://fm.shiro.wtf{path}",
+            f"https://fm.pumpumpal.lol{path}",
             params=payload,
             timeout=ClientTimeout(total=None),
         )
@@ -238,7 +226,7 @@ class lastfm(Cog):
     @command(
         name="nowplaying",
         usage="<member>",
-        example="igna",
+        example="angel",
         aliases=["now", "np", "fm"],
     )
     async def nowplaying(self, ctx: Context, *, member: Member = None):
@@ -262,7 +250,7 @@ class lastfm(Cog):
         invoke_without_command=True,
     )
     async def lastfm(self, ctx: Context):
-        """Interact with Last.fm through rei"""
+        """Interact with Last.fm through pumpumpal"""
         await ctx.send_help()
 
     @lastfm.command(
@@ -645,7 +633,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="crowns",
         usage="<member>",
-        example="igna",
+        example="angel",
         aliases=["crown", "c"],
     )
     async def lastfm_crowns(self, ctx: Context, *, member: Member = None):
@@ -686,7 +674,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="whois",
         usage="<member>",
-        example="igna",
+        example="angel",
         aliases=["profile"],
     )
     async def lastfm_whois(
@@ -949,7 +937,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="recommendation",
         usage="<member>",
-        example="igna",
+        example="angel",
         aliases=["recommend", "rec"],
     )
     async def lastfm_recommendation(self, ctx: Context, *, member: Member = None):
@@ -981,7 +969,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="compare",
         usage="(member)",
-        example="igna",
+        example="angel",
         aliases=["taste", "mutual", "match"],
     )
     async def lastfm_compare(self, ctx: Context, *, member: Member):
@@ -1031,7 +1019,7 @@ class lastfm(Cog):
             title=f"{username} - {target_username}",
             description=(
                 (
-                    f"You both have **{Plural(mutual_artists):artist}** ({percentage(len(mutual_artists), len(largest_library))}) in common\n>>> ```\n"
+                    f"You both have **{Plural(mutual_artists):artist}** ({percentage(len(mutual_artists), len(largest_library))}) in common\n```\n"
                     + "\n".join(mutual_artists[:10])
                 )
                 + "```"
@@ -1042,7 +1030,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="plays",
         usage="<member> <artist>",
-        example="igna Lil Tracy",
+        example="angel Lil Tracy",
     )
     async def lastfm_plays(
         self,
@@ -1080,9 +1068,11 @@ class lastfm(Cog):
             )
 
         await ctx.neutral(
-            f"You have **{Plural(data.get('plays')):play}** for **{data.get('name')}**"
-            if ctx.author == member
-            else f"**{member}** has **{Plural(data.get('plays')):play}** for **{data.get('name')}**",
+            (
+                f"You have **{Plural(data.get('plays')):play}** for **{data.get('name')}**"
+                if ctx.author == member
+                else f"**{member}** has **{Plural(data.get('plays')):play}** for **{data.get('name')}**"
+            ),
             emoji="🎵",
             color=self.get_color(ctx, config),
         )
@@ -1099,7 +1089,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="playstrack",
         usage="<member> <artist> - <track>",
-        example="igna Lil Tracy - R.I.P YUNG BRUH",
+        example="angel Lil Tracy - R.I.P YUNG BRUH",
         aliases=["playst", "tplays"],
     )
     async def lastfm_playstrack(
@@ -1138,9 +1128,11 @@ class lastfm(Cog):
             )
 
         await ctx.neutral(
-            f"You have **{Plural(data.get('plays')):play}** for **{data.get('name')}** by **{data.get('artist')}**"
-            if ctx.author == member
-            else f"**{member}** has **{Plural(data.get('plays')):play}** for **{data.get('name')}** by **{data.get('artist')}**",
+            (
+                f"You have **{Plural(data.get('plays')):play}** for **{data.get('name')}** by **{data.get('artist')}**"
+                if ctx.author == member
+                else f"**{member}** has **{Plural(data.get('plays')):play}** for **{data.get('name')}** by **{data.get('artist')}**"
+            ),
             emoji="🎵",
             color=self.get_color(ctx, config),
         )
@@ -1158,7 +1150,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="playsalbum",
         usage="<member> <artist> - <album>",
-        example="igna Yung Lean - Starz",
+        example="angel Yung Lean - Starz",
         aliases=["playsa", "aplays"],
     )
     async def lastfm_playsalbum(
@@ -1201,9 +1193,11 @@ class lastfm(Cog):
             )
 
         await ctx.neutral(
-            f"You have **{Plural(data.get('plays')):play}** for **{data.get('name')}** by **{data.get('artist')}**"
-            if ctx.author == member
-            else f"**{member}** has **{Plural(data.get('plays')):play}** for **{data.get('name')}** by **{data.get('artist')}**",
+            (
+                f"You have **{Plural(data.get('plays')):play}** for **{data.get('name')}** by **{data.get('artist')}**"
+                if ctx.author == member
+                else f"**{member}** has **{Plural(data.get('plays')):play}** for **{data.get('name')}** by **{data.get('artist')}**"
+            ),
             emoji="🎵",
             color=self.get_color(ctx, config),
         )
@@ -1221,7 +1215,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="collage",
         usage="<member> <size> <period>",
-        example="igna 3x3 weekly",
+        example="angel 3x3 weekly",
         aliases=["chart", "col", "art"],
     )
     @max_concurrency(1, BucketType.member)
@@ -1261,7 +1255,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="topartists",
         usage="<member> <period>",
-        example="igna monthly",
+        example="angel monthly",
         aliases=["topartist", "artists", "artist", "tar", "ta"],
     )
     async def lastfm_topartists(
@@ -1302,7 +1296,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="topalbums",
         usage="<member> <period>",
-        example="igna monthly",
+        example="angel monthly",
         aliases=["topalbum", "albums", "album", "tab", "tl"],
     )
     async def lastfm_topalbums(
@@ -1343,7 +1337,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="toptracks",
         usage="<member> <period>",
-        example="igna monthly",
+        example="angel monthly",
         aliases=["toptrack", "tracks", "track", "ttr", "tt"],
     )
     async def lastfm_toptracks(
@@ -1386,7 +1380,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="toptenalbums",
         usage="<member> <artist>",
-        example="igna Lil Tracy",
+        example="angel Lil Tracy",
         aliases=["tta"],
     )
     async def lastfm_toptenalbums(
@@ -1453,7 +1447,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="toptentracks",
         usage="<member> <artist>",
-        example="igna Lil Tracy",
+        example="angel Lil Tracy",
         aliases=["ttt"],
     )
     async def lastfm_toptentracks(
@@ -1520,7 +1514,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="overview",
         usage="<member> <artist>",
-        example="igna Lil Tracy",
+        example="angel Lil Tracy",
         aliases=["ov"],
     )
     async def lastfm_overview(
@@ -1667,7 +1661,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="favorites",
         usage="<member>",
-        example="igna",
+        example="angel",
         aliases=["favs", "fav", "likes", "liked", "loved"],
     )
     async def lastfm_favorites(
@@ -1709,7 +1703,7 @@ class lastfm(Cog):
     @lastfm.command(
         name="recent",
         usage="<member>",
-        example="igna",
+        example="angel",
         aliases=["recenttracks", "last", "lp"],
     )
     async def lastfm_recent(self, ctx: Context, *, member: Member | str = None):

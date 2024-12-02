@@ -2,7 +2,7 @@
 # You need to install cloudflared for it to actually communicate..
 # dev   -   http://0.0.0.0:59076
 
-git+https://github.com/8841fb/discord.py
+discord.py[speed] @ git+https://github.com/angelizado/discord.py
 pyppeteer
 jishaku
 xxhash

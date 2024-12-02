@@ -17,12 +17,13 @@ from tools import services
 from tools.managers.cog import Cog
 from tools.managers.context import Context
 from tools.utilities.text import Plural
-
+from discord import app_commands
+from discord.ext.commands import hybrid_command
 
 class Fun(Cog):
     """Cog for Fun commands."""
 
-    @command(
+    @hybrid_command(
         name="8ball",
         usage="(question)",
         example="am I pretty?",
@@ -40,14 +41,14 @@ class Fun(Cog):
             f"The **magic 8ball** says: `{response}` after {Plural(shakes):shake} ({question})"
         )
 
-    @command(name="roll", usage="(sides)", example="6", aliases=["dice"])
+    @hybrid_command(name="roll", usage="(sides)", example="6", aliases=["dice"])
     async def roll(self: "Fun", ctx: Context, sides: int = 6):
         """Roll a dice"""
         await ctx.load(f"Rolling a **{sides}** sided dice..")
 
         await ctx.approve(f"You rolled a **{randint(1, sides)}**")
 
-    @command(
+    @hybrid_command(
         name="coinflip",
         usage="<heads/tails>",
         example="heads",
@@ -67,7 +68,7 @@ class Fun(Cog):
             + (f", you **{'won' if side == coin else 'lost'}**!" if side else "!")
         )
 
-    @command(name="tictactoe", usage="(member)", example="igna", aliases=["ttt"])
+    @hybrid_command(name="tictactoe", usage="(member)", example="igna", aliases=["ttt"])
     @max_concurrency(1, BucketType.member)
     async def tictactoe(self: "Fun", ctx: Context, member: Member):
         """Play TicTacToe with another member"""
@@ -253,7 +254,7 @@ class Fun(Cog):
             emoji="🌬",
         )
 
-    @command(
+    @hybrid_command(
         name="slots",
         aliases=["slot", "spin"],
     )
@@ -272,7 +273,7 @@ class Fun(Cog):
                 f"You lost the **slot machine**\n\n `{slots[0]}` `{slots[1]}` `{slots[2]}`"
             )
 
-    @command(
+    @hybrid_command(
         name="poker",
         usage="(red/black)",
         example="red",
@@ -395,7 +396,7 @@ class Fun(Cog):
         self.device_status = False
         await ctx.approve("Device powered off! 🔴")
 
-    @command(
+    @hybrid_command(
         name="howbig",
         usage="<member>",
         example="@user",
@@ -421,7 +422,7 @@ class Fun(Cog):
             f"# 8{shaft}{tip} ({size + 3}cm)"
         )
 
-    @command(
+    @hybrid_command(
         name="howgay",
         usage="<member>",
         example="@user",
@@ -452,7 +453,7 @@ class Fun(Cog):
             f"[{filled}{empty}]"
         )
 
-    @command(
+    @hybrid_command(
         name="ship",
         usage="(member1) [member2]",
         example="igna mars",

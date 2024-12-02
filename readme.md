@@ -1,99 +1,87 @@
- # Rei Ayanami 🤖
+# Rei
 
-<div align=center>
-<img src="rei-pfp.png" width="200" height="200" />
+> A highly customizable, fast, and efficient Discord bot with last.fm integration, minimalistic embeds, and more.
 
-![GitHub repo size](https://img.shields.io/github/repo-size/NERVCorporation/rei?style=for-the-badge)
-![GitHub top language](https://img.shields.io/github/languages/top/NERVCorporation/rei?style=for-the-badge)
- ![License](https://camo.githubusercontent.com/d9b03b92063a55cc4391841c05463a86af0d39cac0536757c6602eafb1cbafaa/68747470733a2f2f696d672e736869656c64732e696f2f6769746875622f6c6963656e73652f7361746e61696e672f617374726f2d70617065723f636f6c6f723d253233324633373431267374796c653d666f722d7468652d6261646765)
+## Features
 
- [![Discord Server](https://discordapp.com/api/guilds/1206246451840294942/widget.png?style=banner2)](https://discord.gg/3mwJgnCrZw)
+- **Highly customizable:** Tailor the bot to suit your needs.
+- **Fast and efficient:** Optimized for performance.
+- **Last.fm integration:** Music-related features powered by last.fm.
+- **Minimalistic embeds:** Clean and aesthetic embeds.
+- **Jishaku for management:** Advanced management features.
+- **Moderation commands:** Useful commands to manage your server.
 
-[__**Join my Discord server for updates!**__](https://discord.gg/3mwJgnCrZw)
+## Running Rei
 
-[__**You can also use our website's source code aswell!**__](https://github.com/leeaahhh/rei-websitev2)
-</div>
+> **Note:** You must have Docker [installed](https://docs.docker.com/engine/install/) on your machine.
 
+### Step 1: Configure the Bot
 
+1. Rename `config.py.example` to `config.py`. This step is **critical** for the bot to run.
 
- ## 🔥Features
+    - **Linux / MacOS:**
 
- - [x] highly customizable
- - [x] fast and efficient
- - [x] last.fm integration
- - [x] minimalistic embeds
- - [x] jishaku for management
- - [x] useful commands for moderation
+    ```sh
+    mv config.py.example config.py
+    ```
 
- *You can add your own commands with minimal python knowledge if you understand the structure of Rei easily!*
+    - **Windows:** Enable "Show file extensions," click the file, press F2, and remove the `.example` extension.
 
- ## 👩‍💻 Running Rei Ayanami
+2. Open `config.py` in your IDE (e.g., Visual Studio Code, Notepad++) and add your Discord bot token.
 
-> **_Note!_** For `Docker` commands,you must have it [installed](https://docs.docker.com/engine/install/) on your machine.
+    ```py
+    token: str = "your bot token"
+    ```
 
-<div align=center>
-Start by doing your configuration file by renaming "config.py.example" to "config.py". This is a <strong>critical</strong> step as without this, the bot won't start up at all.
+3. Add your Discord User ID in the `owners` list. You can add multiple user IDs if you'd like other users to have access to management commands.
 
-You must run these commands in the root of Rei.
+    ```py
+    owners: list[int] = [userid1, userid2]
+    ```
 
-```SH
-# Linux (All Distibutions) / MacOS
-mv config.py.example config.py.example
+4. Add any API keys you need (for features like RemoveBG, Weather, Spotify).
 
-# Windows (Make sure you have the "Show file extensions" option enabled in your settings!)
-Select the file by clicking on it and press F2 and remove the ".example".
-```
+    ```py
+    class Authorization:
+        class Spotify:
+            client_id: str = "enter client id"
+            client_secret: str = "enter client secret"
 
-Start editing the configuration file, "**config.py**", by opening it in a IDE of your choice (Visual Studio Code, Notepad++, etc...). Assuming you know how to get a bot token, make sure you have all the intents enabled. Change the token section to your Discord bot token.
+        removebg: str = "get api key from remove.bg"
+        weather: str = "get api key from https://www.weatherapi.com/"
+    ```
 
-```py
-token: str = "bot token"
-```
+**Note:** Never share your `config.py` file as it contains sensitive information.
 
-After doing so, get your Discord User ID and paste it in this section. You can put multiple User IDs if you want one of your alt accounts or friend to have access to Jishaku commands. 
+### Step 2: Run the Bot
 
-__**Being on the owners list can allow the person to get your Discord bot token and to do even more potential damage to your server or personal computer depending on where you're hosting it!**__
+Run the following command to start the bot:
 
-```py
-owners: list[int] = [userid1,userid2]
-```
+- **Linux / MacOS:**
 
-You can add if you want other API keys for certain commands like RemoveBG, Weather and Spotify.</div>
+    ```sh
+    sudo docker compose up -d --build
+    ```
 
-```py
-class Authorization:
-    class Spotify:
-        client_id: str = "enter client id"
-        client_secret: str = "enter client secret"
+- **Windows:**
 
-    removebg: str = "get api key from remove.bg"
-    weather: str = "get api key from https://www.weatherapi.com/"
-```
-<div align=center>
- Now you're done with the configuration file. Make sure to never share this to anyone, no matter who it is. It is strictly confidential.
+    ```sh
+    docker compose up -d --build
+    ```
 
- Now you need to run the bot, it works with a simple command!
+This will start the bot inside a minimal Virtual Machine for safety.
 
- ```sh
- # Run this in the root directory of Rei.
- # This will create a minimal Virtual Machine to run the bot safely do prevent damage on other important files or directories of your computer.
+### Step 3: Restarting the Bot
 
-# Linux / MacOS
- sudo docker compose up -d --build
+If you need to restart the bot after modifying the configuration or code, use the following commands to stop it:
 
- # Windows
- docker compose up -d --build
- ```
- </div>
+- **Stop the bot and database:**
 
-<div align=center>
-If you ever need to restart the bot because you changed things in the source code or in the configuration file, you can run those two commands to stop the bot and the database.
+    ```sh
+    sudo docker compose down
+    ```
 
+## Links
 
-
-That's all you need to know for running Rei Ayanami on your personal computer or server! Enjoy!
-</div>
-
-
-
-
+- **Website Source Code:** [GitHub Repository](https://github.com/leeaahhh/rei-websitev2)
+- **Discord Server:** [Join the community](https://discord.gg/3mwJgnCrZw)

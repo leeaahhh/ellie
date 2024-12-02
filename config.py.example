@@ -1,9 +1,9 @@
-token: str = "bot token"
+token: str = ""
 
 prefix: str = ","
-owners: list[int] = [userid1,userid2]
+owners: list[int] = ["id"]
 
-activity: str = f"those who know :skull:"
+activity: str = f",invite"
 
 class Color:
     neutral: int = 0x2B2D31
@@ -36,11 +36,11 @@ class Emoji:
 
 
 class Database:
-    host: str = "rei-db"
+    host: str = ""
     port: int = 5432
-    name: str = "rei"
-    user: str = "rei"
-    password: str = "pN3PqpT86Nfr"
+    name: str = ""
+    user: str = ""
+    password: str = ""
 
 
 class Webserver:
@@ -51,14 +51,15 @@ class Webserver:
 
 class Authorization:
     class Spotify:
-        client_id: str = "enter client id"
-        client_secret: str = "enter client secret"
+    # Get ID and Secret from https://developer.spotify.com/
+        client_id: str = ""
+        client_secret: str = ""
 
     class Lavalink:
-        host: str = "rei-lavalink"
+        host: str = ""
         port: int = 2333
-        password: str = "youshallnotpass"
+        password: str = ""
         secure: bool = False
-
-    removebg: str = "get api key from remove.bg"
-    weather: str = "get api key from https://www.weatherapi.com/"
+    # Get API key from https://www.remove.bg/ | Get API key from https://www.weatherapi.com/
+    removebg: str = ""
+    weather: str = ""

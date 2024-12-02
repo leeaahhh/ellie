@@ -3,7 +3,7 @@ from base64 import b64encode
 from contextlib import suppress
 from io import BytesIO
 from mimetypes import guess_type
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 
 from discord import (AllowedMentions, Attachment, Embed, Forbidden,
                      HTTPException, Member, Message, TextChannel, Thread)
@@ -30,7 +30,8 @@ from tools.utilities.checks import donator, require_boost
 from tools.utilities.process import ensure_future
 from tools.utilities.text import Plural, hash
 from tools.utilities.typing import configure_reskin
-
+from discord import app_commands
+from discord.ext.commands import hybrid_command, hybrid_group
 
 class Servers(Cog):
     """Cog for Server commands."""
@@ -245,7 +246,7 @@ class Servers(Cog):
                 )
             )
 
-    @group(
+    @hybrid_group(
         name="prefix",
         invoke_without_command=True,
         example="set ;",
@@ -296,7 +297,7 @@ class Servers(Cog):
 
         return await ctx.approve(f"Set the **prefix** to `{prefix}`")
 
-    @group(
+    @hybrid_group(
         name="welcome",
         usage="(subcommand) <args>",
         example="add #chat Hi {user.mention} <3",
@@ -327,7 +328,7 @@ class Servers(Cog):
     async def welcome_add(
         self,
         ctx: Context,
-        channel: TextChannel | Thread,
+        channel: Union[TextChannel, Thread],
         *,
         message: EmbedScriptValidator,
     ):
@@ -370,7 +371,7 @@ class Servers(Cog):
     )
     @has_permissions(manage_guild=True)
     async def welcome_remove(
-        self: "Servers", ctx: Context, channel: TextChannel | Thread
+        self: "Servers", ctx: Context, channel: Union[TextChannel, Thread]
     ):
         """Remove a welcome message for a channel"""
         try:
@@ -396,7 +397,7 @@ class Servers(Cog):
     )
     @has_permissions(manage_guild=True)
     async def welcome_view(
-        self: "Servers", ctx: Context, channel: TextChannel | Thread
+        self: "Servers", ctx: Context, channel: Union[TextChannel, Thread]
     ):
         """View a welcome message for a channel"""
         data = await self.bot.db.fetchrow(
@@ -459,7 +460,7 @@ class Servers(Cog):
             Embed(title="Welcome Channels", description="\n".join(channels))
         )
 
-    @group(
+    @hybrid_group(
         name="goodbye",
         usage="(subcommand) <args>",
         example="add #chat Bye {user.mention} </3",
@@ -490,7 +491,7 @@ class Servers(Cog):
     async def goodbye_add(
         self,
         ctx: Context,
-        channel: TextChannel | Thread,
+        channel: Union[TextChannel, Thread],
         *,
         message: EmbedScriptValidator,
     ):
@@ -527,7 +528,7 @@ class Servers(Cog):
     )
     @has_permissions(manage_guild=True)
     async def goodbye_remove(
-        self: "Servers", ctx: Context, channel: TextChannel | Thread
+        self: "Servers", ctx: Context, channel: Union[TextChannel, Thread]
     ):
         """Remove a goodbye message for a channel"""
         ctx.parameters.get("self_destruct")
@@ -559,7 +560,7 @@ class Servers(Cog):
     )
     @has_permissions(manage_guild=True)
     async def goodbye_view(
-        self: "Servers", ctx: Context, channel: TextChannel | Thread
+        self: "Servers", ctx: Context, channel: Union[TextChannel, Thread]
     ):
         """View a goodbye message for a channel"""
         data = await self.bot.db.fetchrow(
@@ -622,7 +623,7 @@ class Servers(Cog):
             Embed(title="Goodbye Channels", description="\n".join(channels))
         )
 
-    @group(
+    @hybrid_group(
         name="boost",
         usage="(subcommand) <args>",
         example="add #chat Thx {user.mention} :3",
@@ -653,7 +654,7 @@ class Servers(Cog):
     async def boost_add(
         self,
         ctx: Context,
-        channel: TextChannel | Thread,
+        channel: Union[TextChannel, Thread],
         *,
         message: EmbedScriptValidator,
     ):
@@ -690,7 +691,7 @@ class Servers(Cog):
     )
     @has_permissions(manage_guild=True)
     async def boost_remove(
-        self: "Servers", ctx: Context, channel: TextChannel | Thread
+        self: "Servers", ctx: Context, channel: Union[TextChannel, Thread]
     ):
         """Remove a boost message for a channel"""
         try:
@@ -713,7 +714,7 @@ class Servers(Cog):
         aliases=["check", "test", "emit"],
     )
     @has_permissions(manage_guild=True)
-    async def boost_view(self: "Servers", ctx: Context, channel: TextChannel | Thread):
+    async def boost_view(self: "Servers", ctx: Context, channel: Union[TextChannel, Thread]):
         """View a boost message for a channel"""
         data = await self.bot.db.fetchrow(
             "SELECT message, self_destruct FROM boost_messages WHERE guild_id = $1 AND channel_id = $2",
@@ -755,7 +756,7 @@ class Servers(Cog):
 
         return await ctx.approve("Removed all **boost channels**")
 
-    @group(
+    @hybrid_group(
         name="reaction",
         usage="(subcommand) <args>",
         example="add 🐐 igna",
@@ -892,7 +893,7 @@ class Servers(Cog):
             )
         )
 
-    @group(
+    @hybrid_group(
         name="boosterrole",
         usage="(color) <name>",
         example="#BBAAEE 4PF",
@@ -1145,7 +1146,7 @@ class Servers(Cog):
         self,
         ctx: Context,
         *,
-        icon: Literal["remove", "reset", "off"] | EmojiFinder | ImageFinder = None,
+        icon: Union[Literal["remove", "reset", "off"], EmojiFinder, ImageFinder] = None,
     ):
         """Change the icon of your booster role"""
         if "ROLE_ICONS" not in ctx.guild.features:
@@ -1194,7 +1195,7 @@ class Servers(Cog):
     )
     @has_permissions(manage_guild=True)
     async def log(
-        self: "Servers", ctx: Context, *, channel: TextChannel | Thread = None
+        self: "Servers", ctx: Context, *, channel: Union[TextChannel, Thread] = None
     ):
         """Set the moderation log channel"""
         if not channel:
@@ -1244,7 +1245,7 @@ class Servers(Cog):
 
         return await ctx.approve("Reset all **moderation cases**")
 
-    @group(
+    @hybrid_group(
         name="invoke",
         usage="(command) (embed script)",
         example="ban 🚬 - {reason}",
@@ -1317,7 +1318,7 @@ class Servers(Cog):
         else:
             await ctx.error(f"Command `{_command}` doesn't exist")
 
-    @group(
+    @hybrid_group(
         name="alias",
         usage="(subcommand) <args>",
         example="add deport ban",
@@ -1464,7 +1465,7 @@ class Servers(Cog):
             Embed(title="Command Aliases", description="\n".join(aliases))
         )
 
-    @group(
+    @hybrid_group(
         name="reskin",
         usage="(subcommand) <args>",
         example="name Destroy Lonely",
@@ -1709,7 +1710,7 @@ class Servers(Cog):
         )
         await ctx.approve("Removed your **reskin**")
 
-    @group(
+    @hybrid_group(
         name="autorole",
         usage="(subcommand) <args>",
         example="add @Member",
@@ -1836,7 +1837,7 @@ class Servers(Cog):
             )
         )
 
-    @group(
+    @hybrid_group(
         name="fakepermissions",
         usage="(subcommand) <args>",
         example="grant @Moderator manage_messages",
@@ -1954,7 +1955,7 @@ class Servers(Cog):
             )
         )
 
-    @group(
+    @hybrid_group(
         name="command",
         usage="(subcommand) <args>",
         example="disable #spam blunt",
@@ -1976,7 +1977,7 @@ class Servers(Cog):
     async def command_enable(
         self,
         ctx: Context,
-        channel: TextChannel | Thread | Literal["all"],
+        channel: Union[TextChannel, Thread, Literal["all"]],
         *,
         command: Command,
     ):
@@ -2031,7 +2032,7 @@ class Servers(Cog):
     async def command_disable(
         self,
         ctx: Context,
-        channel: TextChannel | Thread | Literal["all"],
+        channel: Union[TextChannel, Thread, Literal["all"]],
         *,
         command: Command,
     ):
@@ -2179,7 +2180,7 @@ class Servers(Cog):
             )
         )
 
-    @group(
+    @hybrid_group(
         name="response",
         usage="(subcommand) <args>",
         example="add Hi, Hey {user} -reply",
@@ -2363,7 +2364,7 @@ class Servers(Cog):
             )
         )
 
-    @group(
+    @hybrid_group(
         name="sticky",
         usage="(subcommand) <args>",
         example="add #selfie Oh look at me!",
@@ -2393,7 +2394,7 @@ class Servers(Cog):
     async def sticky_add(
         self,
         ctx: Context,
-        channel: TextChannel | Thread,
+        channel: Union[TextChannel, Thread],
         *,
         message: EmbedScriptValidator,
     ):
@@ -2443,7 +2444,7 @@ class Servers(Cog):
     )
     @has_permissions(manage_guild=True)
     async def sticky_remove(
-        self: "Servers", ctx: Context, channel: TextChannel | Thread
+        self: "Servers", ctx: Context, channel: Union[TextChannel, Thread]
     ):
         """Remove a sticky message for a channel"""
 
@@ -2470,7 +2471,7 @@ class Servers(Cog):
         aliases=["check", "test", "emit"],
     )
     @has_permissions(manage_guild=True)
-    async def sticky_view(self: "Servers", ctx: Context, channel: TextChannel | Thread):
+    async def sticky_view(self: "Servers", ctx: Context, channel: Union[TextChannel, Thread]):
         """View a sticky message for a channel"""
 
         data = await self.bot.db.fetchrow(
@@ -2540,7 +2541,7 @@ class Servers(Cog):
             )
         )
 
-    @group(
+    @hybrid_group(
         name="soundboard",
         aliases=["sound"],
     )

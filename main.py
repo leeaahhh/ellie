@@ -5,6 +5,14 @@ from tools.rei import rei
 
 bot = rei()
 
+@bot.event
+async def on_ready():
+    """Syncs slash commands when the bot is ready."""
+    try:
+        await bot.tree.sync()
+    except Exception as e:
+        print(f"{e}")
+
 @bot.check
 async def blacklisted(ctx: Context) -> bool:
     """Check if a user is blacklisted"""
