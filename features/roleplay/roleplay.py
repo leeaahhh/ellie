@@ -3,7 +3,8 @@ from discord.ext import commands
 import aiohttp
 from typing import Optional
 import config
-
+from discord import app_commands
+from discord.ext.commands import hybrid_command
 
 class Roleplay(commands.Cog):
     def __init__(self, bot):
@@ -18,7 +19,7 @@ class Roleplay(commands.Cog):
                     return data["link"]
                 return None
 
-    @commands.command()
+    @hybrid_command()
     async def hug(self, ctx, member: Optional[discord.Member]):
         """Hug someone!"""
         if not member:
@@ -32,7 +33,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=image)
         await ctx.send(embed=embed)
 
-    @commands.command() 
+    @hybrid_command() 
     async def kiss(self, ctx, member: Optional[discord.Member]):
         """Kiss someone!"""
         if not member:
@@ -46,7 +47,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=image)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @hybrid_command()
     async def pat(self, ctx, member: Optional[discord.Member]):
         """Pat someone!"""
         if not member:
@@ -60,7 +61,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=image)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @hybrid_command()
     async def slap(self, ctx, member: Optional[discord.Member]):
         """Slap someone!"""
         if not member:
@@ -74,7 +75,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=image)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @hybrid_command()
     async def cuddle(self, ctx, member: Optional[discord.Member]):
         """Cuddle with someone!"""
         if not member:
@@ -88,7 +89,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=image)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @hybrid_command()
     async def lick(self, ctx, member: Optional[discord.Member]):
         """Lick someone!"""
         if not member:
@@ -102,7 +103,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=image)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @hybrid_command()
     async def bite(self, ctx, member: Optional[discord.Member]):
         """Bite someone!"""
         if not member:
@@ -116,7 +117,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=image)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @hybrid_command()
     async def poke(self, ctx, member: Optional[discord.Member]):
         """Poke someone!"""
         if not member:
@@ -130,7 +131,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=image)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @hybrid_command()
     async def tickle(self, ctx, member: Optional[discord.Member]):
         """Tickle someone!"""
         if not member:
@@ -144,7 +145,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=image)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @hybrid_command()
     async def pout(self, ctx):
         """Show that you're pouting!"""
         image = await self._get_roleplay_image("sfw/pout")
@@ -155,7 +156,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=image)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @hybrid_command()
     async def cry(self, ctx):
         """Show that you're crying!"""
         image = await self._get_roleplay_image("sfw/cry")
@@ -166,7 +167,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=image)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @hybrid_command()
     async def angry(self, ctx):
         """Show that you're angry!"""
         image = await self._get_roleplay_image("sfw/angry")
@@ -177,7 +178,7 @@ class Roleplay(commands.Cog):
         embed.set_image(url=image)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @hybrid_command()
     async def blush(self, ctx):
         """Show that you're blushing!"""
         image = await self._get_roleplay_image("sfw/blush")
