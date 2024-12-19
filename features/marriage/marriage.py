@@ -9,11 +9,10 @@ import math
 
 from tools.managers.cog import Cog
 from tools.managers.context import Context
-from discord import app_commands
-from discord.ext.commands import hybrid_command
+
 
 class Marriage(Cog):
-    @hybrid_command(
+    @command(
         name="marry",
         usage="(member)",
         example="igna",
@@ -28,9 +27,8 @@ class Marriage(Cog):
             member.id,
         )
         if marriage:
-            partner_id = marriage['partner_id'] if marriage['user_id'] == member.id else marriage['user_id']
             return await ctx.error(
-                f"**{member.name}** is already married to **{self.bot.get_user(partner_id).name}**"
+                f"**{member.name}** is already married to **{self.bot.get_user(marriage.get('user_id')).name}**"
             )
 
         marriage = await self.bot.db.fetchrow(
@@ -38,9 +36,8 @@ class Marriage(Cog):
             ctx.author.id,
         )
         if marriage:
-            partner_id = marriage['partner_id'] if marriage['user_id'] == ctx.author.id else marriage['user_id']
             return await ctx.error(
-                f"You're already married to **{self.bot.get_user(partner_id).name}**"
+                f"You're already married to **{self.bot.get_user(marriage.get('user_id')).name}**"
             )
 
         if member == ctx.author:
@@ -65,7 +62,7 @@ class Marriage(Cog):
             f"**{ctx.author.name}** and **{member.name}** are now married!"
         )
 
-    @hybrid_command(
+    @command(
         name="divorce",
         aliases=["breakup"],
     )
@@ -90,7 +87,7 @@ class Marriage(Cog):
         )
         return await ctx.neutral("You are now **divorced**")
 
-    @hybrid_command(
+    @command(
         name="partner",
         aliases=["spouse"],
     )
@@ -107,7 +104,7 @@ class Marriage(Cog):
         partner = self.bot.get_user(marriage.get("partner_id"))
         return await ctx.neutral(f"You're married to **{partner}**")
 
-    @hybrid_command(name="adopt", usage="(member)", example="igna")
+    @command(name="adopt", usage="(member)", example="igna")
     @max_concurrency(1, BucketType.member)
     @cooldown(1, 60, BucketType.member)
     async def adopt(self, ctx: Context, member: Member):
@@ -154,7 +151,7 @@ class Marriage(Cog):
             f"**{ctx.author.name}** has adopted **{member.name}**!"
         )
 
-    @hybrid_command(name="children")
+    @command(name="children")
     async def children(self, ctx: Context, member: Optional[Member] = None):
         """List all your children or another member's children"""
         target = member or ctx.author
@@ -170,7 +167,7 @@ class Marriage(Cog):
         children_names = [f"**{self.bot.get_user(child['child_id']).name}**" for child in children]
         return await ctx.neutral(f"{target.name}'s children: {', '.join(children_names)}")
 
-    @hybrid_command(name="parent")
+    @command(name="parent")
     async def parent(self, ctx: Context, member: Optional[Member] = None):
         """Check who is your/someone's parent"""
         target = member or ctx.author
@@ -186,7 +183,7 @@ class Marriage(Cog):
         parent_user = self.bot.get_user(parent['parent_id'])
         return await ctx.neutral(f"**{target.name}**'s parent is **{parent_user.name}**")
 
-    @hybrid_command(name="runaway")
+    @command(name="runaway")
     @cooldown(1, 60, BucketType.member)
     async def runaway(self, ctx: Context):
         """Run away from your parent"""
@@ -207,7 +204,7 @@ class Marriage(Cog):
         )
         return await ctx.neutral("You have successfully run away from your parent")
 
-    @hybrid_command(name="disown")
+    @command(name="disown")
     @cooldown(1, 60, BucketType.member)
     async def disown(self, ctx: Context, member: Member):
         """Disown one of your children"""
@@ -230,7 +227,7 @@ class Marriage(Cog):
         )
         return await ctx.neutral(f"You have disowned **{member.name}**")
 
-    @hybrid_command(name="relationship")
+    @command(name="relationship")
     async def relationship(self, ctx: Context, member1: Member, member2: Optional[Member] = None):
         """Check the relationship between two members"""
         if member2 is None:
@@ -355,7 +352,7 @@ class Marriage(Cog):
 
         return await ctx.error(f"**{member1.name}** and **{member2.name}** are not related")
 
-    @hybrid_command(name="forcedivorce")
+    @command(name="forcedivorce")
     @has_permissions(manage_roles=True)
     async def forcedivorce(self, ctx: Context, member: Member):
         """Force divorce a member (Manage Roles required)"""
@@ -372,7 +369,7 @@ class Marriage(Cog):
         )
         return await ctx.neutral(f"**{member.name}** has been forcefully divorced")
 
-    @hybrid_command(name="forceemancipate")
+    @command(name="forceemancipate")
     @has_permissions(manage_roles=True)
     async def forceemancipate(self, ctx: Context, member: Member):
         """Force emancipate a member from their parent (Manage Roles required)"""
@@ -389,7 +386,7 @@ class Marriage(Cog):
         )
         return await ctx.neutral(f"**{member.name}** has been forcefully emancipated")
 
-    @hybrid_command(name="forcemarry")
+    @command(name="forcemarry")
     @has_permissions(manage_roles=True)
     async def forcemarry(self, ctx: Context, member1: Member, member2: Member):
         """Force marry two members (Manage Roles required)"""
@@ -408,7 +405,7 @@ class Marriage(Cog):
         )
         return await ctx.neutral(f"**{member1.name}** and **{member2.name}** have been forcefully married")
 
-    @hybrid_command(name="makeparent")
+    @command(name="makeparent")
     @has_permissions(manage_roles=True)
     async def makeparent(self, ctx: Context, parent: Member, child: Member):
         """Force make someone a parent of another member (Manage Roles required)"""
@@ -426,7 +423,7 @@ class Marriage(Cog):
         )
         return await ctx.neutral(f"**{parent.name}** has forcefully made **{child.name}** their child")
 
-    @hybrid_command(name="toggleincest", aliases=["incest"])
+    @command(name="toggleincest", aliases=["incest"])
     @has_permissions(manage_guild=True)
     async def toggle_incest(self, ctx: Context):
         """Toggle whether family members can marry each other (Manage Guild required)"""
@@ -628,7 +625,7 @@ class Marriage(Cog):
                           (x, y - 20)],
                          fill=(255, 255, 255, 200), width=2)
 
-    @hybrid_command(name="tree")
+    @command(name="tree")
     async def tree(self, ctx: Context, member: Optional[Member] = None):
         """Display a family tree"""
         target = member or ctx.author

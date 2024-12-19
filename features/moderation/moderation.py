@@ -6,7 +6,7 @@ from io import BytesIO
 from re import finditer
 from tempfile import TemporaryDirectory
 from traceback import format_exception
-from typing import Literal, Union
+from typing import Literal
 
 from discord import Embed
 from discord import Emoji as DiscordEmoji
@@ -27,11 +27,8 @@ from tools.converters.embed import EmbedScript
 from tools.managers import regex
 from tools.managers.cog import Cog
 from tools.managers.context import Context
-from tools.managers.converter import User
 from tools.utilities.text import Plural, hash
 import uwuify
-from discord import app_commands
-from discord.ext.commands import hybrid_command
 
 
 class Moderation(Cog):
@@ -66,7 +63,7 @@ class Moderation(Cog):
     async def moderation_entry(
         self: "Moderation",
         ctx: Context,
-        target: Union[Member, User, Role, TextChannel, str],
+        target: Member | User | Role | TextChannel | str,
         action: str,
         reason: str = "no reason provided",
     ):
@@ -325,7 +322,7 @@ class Moderation(Cog):
     async def nickname(
         self,
         ctx: Context,
-        member: Union[Member, None] = None,
+        member: Member | None = None,
         *,
         text: str,
     ):
@@ -371,7 +368,7 @@ class Moderation(Cog):
     async def nickname_remove(
         self,
         ctx: Context,
-        member: Union[Member, None] = None,
+        member: Member | None = None,
     ):
         """Remove the nickname of a user"""
         member = member or ctx.author
@@ -411,7 +408,7 @@ class Moderation(Cog):
         self,
         ctx: Context,
         member: Member,
-        duration: Union[TimeConverter, None],
+        duration: TimeConverter | None,
         *,
         text: str,
     ):
@@ -479,14 +476,14 @@ class Moderation(Cog):
             user=member,
         )
 
-    @hybrid_command(
+    @command(
         name="reason",
         usage="<case ID> (reason)",
         example="User was spamming",
         aliases=["rsn"],
     )
     @has_permissions(manage_messages=True)
-    async def reason(self, ctx: Context, case_id: Union[int, None], *, reason: str):
+    async def reason(self, ctx: Context, case_id: int | None, *, reason: str):
         """Update a moderation case reason"""
         case = await self.bot.db.fetchrow(
             "SELECT * FROM cases WHERE guild_id = $1 AND (case_id = $2 OR case_id = (SELECT MAX(case_id) FROM cases WHERE guild_id = $1))",
@@ -535,7 +532,7 @@ class Moderation(Cog):
         invoke_without_command=True,
     )
     @has_permissions(manage_messages=True)
-    async def history(self, ctx: Context, *, user: User):
+    async def history(self, ctx: Context, *, user: Member | User):
         """View punishment history for a user"""
         cases = await self.bot.db.fetch(
             "SELECT * FROM cases WHERE guild_id = $1 AND target_id = $2 ORDER BY case_id DESC",
@@ -581,7 +578,7 @@ class Moderation(Cog):
     async def history_remove(
         self,
         ctx: Context,
-        user: User,
+        user: Member | User,
         case_id: int,
     ):
         """Remove a punishment from a user's history"""
@@ -613,7 +610,7 @@ class Moderation(Cog):
         aliases=["clear"],
     )
     @has_permissions(manage_messages=True)
-    async def history_reset(self, ctx: Context, user: User):
+    async def history_reset(self, ctx: Context, user: Member | User):
         """Reset a user's punishment history"""
         await ctx.prompt(
             f"Are you sure you want to **reset** all punishment history for **{user}**?"
@@ -637,7 +634,7 @@ class Moderation(Cog):
         )
         return await ctx.react_check()
 
-    @hybrid_command(
+    @command(
         name="timeout",
         usage="(member) (duration) <reason>",
         example="igna 7d trolling",
@@ -712,7 +709,7 @@ class Moderation(Cog):
         )
         await self.moderation_entry(ctx, member, "timeout lifted", reason)
 
-    @hybrid_command(
+    @command(
         name="ban",
         usage="(user) <delete history> <reason>",
         example="igna 7d trolling",
@@ -729,8 +726,8 @@ class Moderation(Cog):
     async def ban(
         self,
         ctx: Context,
-        user: User,
-        days: Union[Literal[0, 1, 7], None] = 0,
+        user: Member | User,
+        days: Literal[0, 1, 7] | None = 0,
         *,
         reason: str = "No reason provided",
     ):
@@ -775,7 +772,7 @@ class Moderation(Cog):
         )
         return await self.moderation_entry(ctx, user, "ban", reason)
 
-    @hybrid_command(
+    @command(
         name="kick",
         usage="(member) <reason>",
         example="igna trolling",
@@ -828,7 +825,7 @@ class Moderation(Cog):
         await self.invoke_message(ctx, ctx.check, user=member, reason=reason)
         await self.moderation_entry(ctx, member, "kick", reason)
 
-    @hybrid_command(
+    @command(
         name="unban",
         usage="(user) <reason>",
         example="igna forgiven",
@@ -884,7 +881,7 @@ class Moderation(Cog):
     async def emoji_add(
         self,
         ctx: Context,
-        emoji: Union[DiscordEmoji, PartialEmoji, ImageFinder, int, None],
+        emoji: DiscordEmoji | PartialEmoji | ImageFinder | int | None,
         *,
         name: str = None,
     ):
@@ -1029,7 +1026,7 @@ class Moderation(Cog):
     async def purge(
         self,
         ctx: Context,
-        user: Union[Member, User, None] = None,
+        user: Member | User | None = None,
         amount: int = None,
     ):
         """Purge a specified amount of messages"""
@@ -1799,7 +1796,7 @@ class Moderation(Cog):
         ctx: Context,
         role: Role,
         *,
-        icon: Union[Literal["remove", "reset", "off"], EmojiFinder, ImageFinder, None] = None,
+        icon: Literal["remove", "reset", "off"] | EmojiFinder | ImageFinder = None,
     ):
         """Change the icon of a role"""
         await Role().manageable(ctx, role, booster=True)
@@ -1874,7 +1871,7 @@ class Moderation(Cog):
             mentionable=role.mentionable,
         )
 
-    @hybrid_command(
+    @command(
         name="moveall",
         usage="(voice channel)",
         example="#voice",
@@ -1904,7 +1901,7 @@ class Moderation(Cog):
             moved = await gather(*tasks)
             await ctx.approve(f"Moved **{Plural(moved):member}** to {channel.mention}")
 
-    @hybrid_command(
+    @command(
         name="hide",
         usage="<channel> <reason>",
         example="#chat",
@@ -1914,7 +1911,7 @@ class Moderation(Cog):
     async def hide(
         self,
         ctx: Context,
-        channel: Union[TextChannel, None] = None,
+        channel: TextChannel | None = None,
         *,
         reason: str = "No reason provided",
     ):
@@ -1941,7 +1938,7 @@ class Moderation(Cog):
         )
         await self.moderation_entry(ctx, channel, "hide", reason)
 
-    @hybrid_command(
+    @command(
         name="reveal",
         usage="<channel> <reason>",
         example="#chat",
@@ -1951,7 +1948,7 @@ class Moderation(Cog):
     async def unhide(
         self,
         ctx: Context,
-        channel: Union[TextChannel, None] = None,
+        channel: TextChannel | None = None,
         *,
         reason: str = "No reason provided",
     ):
@@ -1989,7 +1986,7 @@ class Moderation(Cog):
     async def lockdown(
         self,
         ctx: Context,
-        channel: Union[TextChannel, None] = None,
+        channel: TextChannel | None = None,
         *,
         reason: str = "No reason provided",
     ):
@@ -2140,7 +2137,7 @@ class Moderation(Cog):
     async def unlockdown(
         self,
         ctx: Context,
-        channel: Union[TextChannel, None] = None,
+        channel: TextChannel | None = None,
         *,
         reason: str = "No reason provided",
     ):
@@ -2217,7 +2214,7 @@ class Moderation(Cog):
     async def slowmode(
         self,
         ctx: Context,
-        channel: Union[TextChannel, None],
+        channel: TextChannel | None,
         *,
         delay: TimeConverter,
     ):
@@ -2250,7 +2247,7 @@ class Moderation(Cog):
         aliases=["off"],
     )
     @has_permissions(manage_channels=True)
-    async def slowmode_disable(self, ctx: Context, channel: Union[TextChannel, None]):
+    async def slowmode_disable(self, ctx: Context, channel: TextChannel | None):
         """Disable slowmode for a channel"""
         channel = channel or ctx.channel
 
@@ -2262,7 +2259,7 @@ class Moderation(Cog):
         await channel.edit(slowmode_delay=0)
         await ctx.approve(f"Disabled slowmode for {channel.mention}")
 
-    @hybrid_command(
+    @command(
         name="nsfw",
         usage="<channel>",
         example="#chat",
@@ -2307,7 +2304,7 @@ class Moderation(Cog):
     async def sticker_add(
         self,
         ctx: Context,
-        image: Union[StickerFinder, ImageFinderStrict, None],
+        image: StickerFinder | ImageFinderStrict | None,
         *,
         name: str = None,
     ):
@@ -2428,7 +2425,7 @@ class Moderation(Cog):
     async def sticker_rename(
         self,
         ctx: Context,
-        sticker: Union[StickerFinder, None],
+        sticker: StickerFinder | None,
         *,
         name: str,
     ):
@@ -2461,7 +2458,7 @@ class Moderation(Cog):
         """View all stickers in the server"""
         await self.bot.get_command("stickers")(ctx)
 
-    @hybrid_command(
+    @command(
         name="cleanup",
         usage="<amount>",
         example="15",
@@ -2496,7 +2493,7 @@ class Moderation(Cog):
             reason=f"{ctx.author}: Cleanup",
         )
 
-    @hybrid_command(
+    @command(
         name="uwuify",
         usage="(member) <duration>",
         example="rei 10m",
@@ -2514,7 +2511,7 @@ class Moderation(Cog):
         ctx: Context,
         member: Member,
         *,
-        duration: Union[TimeConverter, None] = None,
+        duration: TimeConverter | None = None,
     ):
         """Make a member's messages uwu-ified"""
         await Member().hierarchy(ctx, member)
@@ -2572,7 +2569,7 @@ class Moderation(Cog):
             return
 
         try:
-            uwu_text = uwuify.uwu(message.content, flags=Union[uwuify.SMILEY, uwuify.STUTTER])
+            uwu_text = uwuify.uwu(message.content, flags=uwuify.SMILEY | uwuify.STUTTER)
             await message.delete()
             await webhook.send(
                 content=uwu_text,

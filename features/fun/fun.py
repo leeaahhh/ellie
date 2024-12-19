@@ -17,19 +17,17 @@ from tools import services
 from tools.managers.cog import Cog
 from tools.managers.context import Context
 from tools.utilities.text import Plural
-from discord import app_commands
-from discord.ext.commands import hybrid_command
+
 
 class Fun(Cog):
     """Cog for Fun commands."""
 
-    @hybrid_command(
+    @command(
         name="8ball",
         usage="(question)",
         example="am I pretty?",
         aliases=["8b"],
     )
-    @app_commands.describe(question="The question to ask the magic 8ball")
     async def eightball(self, ctx: Context, *, question: str):
         """Ask the magic 8ball a question"""
         await ctx.load("Shaking the **magic 8ball**..")
@@ -42,21 +40,19 @@ class Fun(Cog):
             f"The **magic 8ball** says: `{response}` after {Plural(shakes):shake} ({question})"
         )
 
-    @hybrid_command(name="roll", usage="(sides)", example="6", aliases=["dice"])
-    @app_commands.describe(sides="Number of sides on the dice")
+    @command(name="roll", usage="(sides)", example="6", aliases=["dice"])
     async def roll(self: "Fun", ctx: Context, sides: int = 6):
         """Roll a dice"""
         await ctx.load(f"Rolling a **{sides}** sided dice..")
 
         await ctx.approve(f"You rolled a **{randint(1, sides)}**")
 
-    @hybrid_command(
+    @command(
         name="coinflip",
         usage="<heads/tails>",
         example="heads",
         aliases=["flipcoin", "cf", "fc"],
     )
-    @app_commands.describe(side="Choose heads or tails")
     async def coinflip(
         self: "Fun", ctx: Context, *, side: Literal["heads", "tails"] = None
     ):
@@ -71,8 +67,7 @@ class Fun(Cog):
             + (f", you **{'won' if side == coin else 'lost'}**!" if side else "!")
         )
 
-    @hybrid_command(name="tictactoe", usage="(member)", example="igna", aliases=["ttt"])
-    @app_commands.describe(member="The member to play against")
+    @command(name="tictactoe", usage="(member)", example="igna", aliases=["ttt"])
     @max_concurrency(1, BucketType.member)
     async def tictactoe(self: "Fun", ctx: Context, member: Member):
         """Play TicTacToe with another member"""
@@ -258,7 +253,7 @@ class Fun(Cog):
             emoji="🌬",
         )
 
-    @hybrid_command(
+    @command(
         name="slots",
         aliases=["slot", "spin"],
     )
@@ -277,13 +272,12 @@ class Fun(Cog):
                 f"You lost the **slot machine**\n\n `{slots[0]}` `{slots[1]}` `{slots[2]}`"
             )
 
-    @hybrid_command(
+    @command(
         name="poker",
         usage="(red/black)",
         example="red",
         aliases=["cards"],
     )
-    @app_commands.describe(color="Choose red or black")
     @max_concurrency(1, BucketType.member)
     async def poker(self: "Fun", ctx: Context, *, color: Literal["red", "black"]):
         """Play a game of poker"""
@@ -295,7 +289,7 @@ class Fun(Cog):
                     "🂡",
                     "🂢",
                     "🂣",
-                    "��",
+                    "🂤",
                     "🂥",
                     "🂦",
                     "🂧",
@@ -401,23 +395,23 @@ class Fun(Cog):
         self.device_status = False
         await ctx.approve("Device powered off! 🔴")
 
-    @hybrid_command(
+    @command(
         name="howbig",
         usage="<member>",
         example="@user",
         aliases=["size", "length"]
     )
-    @app_commands.describe(member="The member to check")
     @cooldown(1, 10, BucketType.member)
     async def howbig(self: "Fun", ctx: Context, member: Member = None):
         """Check how big someone is"""
         member = member or ctx.author
         
+        #consistent random size for each user
         if await self.bot.is_owner(member):
             size = 50
         else:
             seed = member.id % 35
-            size = seed + 1  
+            size = seed + 1  # 1-36 range
         
         shaft = "=" * size
         tip = "Đ"
@@ -427,23 +421,23 @@ class Fun(Cog):
             f"# 8{shaft}{tip} ({size + 3}cm)"
         )
 
-    @hybrid_command(
+    @command(
         name="howgay",
         usage="<member>",
         example="@user",
         aliases=["gay"]
     )
-    @app_commands.describe(member="The member to check")
     @cooldown(1, 10, BucketType.member)
     async def howgay(self: "Fun", ctx: Context, member: Member = None):
         """Check how gay someone is"""
         member = member or ctx.author
 
         gay_levels = {
-            947204756898713721: 101,
+            947204756898713721: 101,  # userid: percentage,
             945104190617845790: 999,
         }
         
+        # consistent percentage
         if member.id in gay_levels:
             percentage = gay_levels[member.id]
         else:
@@ -458,34 +452,33 @@ class Fun(Cog):
             f"[{filled}{empty}]"
         )
 
-    @hybrid_command(
+    @command(
         name="ship",
         usage="(member1) [member2]",
         example="igna mars",
         aliases=["love", "compatibility"]
-    )
-    @app_commands.describe(
-        member1="First member to ship",
-        member2="Second member to ship (defaults to you)"
     )
     async def ship(self: "Fun", ctx: Context, member1: Member, member2: Member = None):
         """Calculate love compatibility between two members"""
         if member2 is None:
             member2 = ctx.author
         
-        if member == member2:
+        if member1 == member2:
             return await ctx.error("You can't ship someone with themselves!")
 
-        compatibility = ((member.id + member2.id) % 100) + 1
+        # Generate a consistent compatibility percentage based on member IDs
+        compatibility = ((member1.id + member2.id) % 100) + 1
         
+        # Create embed
         embed = Embed(
             title="💕 Love Calculator 💕",
-            description=f"**{member.name}** x **{member2.name}**\n**{compatibility}%**",
+            description=f"**{member1.name}** x **{member2.name}**\n**{compatibility}%**",
             color=Color.pink()
         )
 
+        # Download avatars
         async with aiohttp.ClientSession() as session:
-            async with session.get(str(member.display_avatar.url)) as resp:
+            async with session.get(str(member1.display_avatar.url)) as resp:
                 avatar1_data = await resp.read()
             async with session.get(str(member2.display_avatar.url)) as resp:
                 avatar2_data = await resp.read()
@@ -496,29 +489,36 @@ class Fun(Cog):
             draw.ellipse((0, 0) + size, fill=255)
             return mask
 
+        # Create the ship image
         with Image.open(io.BytesIO(avatar1_data)) as avatar1_img, \
              Image.open(io.BytesIO(avatar2_data)) as avatar2_img, \
              Image.open("assets/heart.png") as heart_img:
             
+            # Resize avatars to 128x128
             size = (128, 128)
             avatar1_img = avatar1_img.convert('RGBA').resize(size)
             avatar2_img = avatar2_img.convert('RGBA').resize(size)
             
+            # Create circular mask and apply to avatars
             mask = create_circular_mask(size)
             avatar1_circle = Image.new('RGBA', size, (0, 0, 0, 0))
             avatar2_circle = Image.new('RGBA', size, (0, 0, 0, 0))
             avatar1_circle.paste(avatar1_img, (0, 0), mask)
             avatar2_circle.paste(avatar2_img, (0, 0), mask)
             
+            # Create base image (adjusted width)
             base = Image.new('RGBA', (350, 170), (0, 0, 0, 0))
             
+            # Calculate positions for closer avatars
             avatar1_pos = (30, 0)
             avatar2_pos = (192, 0)
             
+            # Create progress bar (thinner and lower)
             bar_width = 200
             bar_height = 16
-            bar_pos = (75, 140)
+            bar_pos = (75, 140)  # Positioned under avatars
             
+            # Draw background bar
             draw = ImageDraw.Draw(base)
             draw.rectangle(
                 (bar_pos[0], bar_pos[1], bar_pos[0] + bar_width, bar_pos[1] + bar_height),
@@ -527,14 +527,16 @@ class Fun(Cog):
                 width=1
             )
             
+            # Draw filled portion based on compatibility
             filled_width = int(bar_width * (compatibility / 100))
             draw.rectangle(
                 (bar_pos[0], bar_pos[1], bar_pos[0] + filled_width, bar_pos[1] + bar_height),
-                fill=(255, 192, 203, 255)
+                fill=(255, 192, 203, 255)  # Pink fill
             )
             
+            # Add percentage text on slider
             try:
-                font = ImageFont.truetype("assets/font.ttf", 20)
+                font = ImageFont.truetype("assets/font.ttf", 20)  # You'll need to add a font file
             except:
                 font = ImageFont.load_default()
                 
@@ -545,19 +547,27 @@ class Fun(Cog):
             text_y = bar_pos[1] + (bar_height - text_bbox[3]) // 2
             draw.text((text_x, text_y), text, font=font, fill=(255, 255, 255, 255))
             
+            # Paste avatars
             base.paste(avatar1_circle, avatar1_pos)
             base.paste(avatar2_circle, avatar2_pos)
             
+            # Resize heart and paste in middle of progress bar
             heart_size = (48, 48)
             heart_img = heart_img.resize(heart_size)
             heart_pos = (bar_pos[0] + (bar_width // 2) - (heart_size[0] // 2), 
                         bar_pos[1] - (heart_size[1] // 2))
             base.paste(heart_img, heart_pos, heart_img)
             
+            # Save to buffer
             buffer = io.BytesIO()
             base.save(buffer, 'PNG')
             buffer.seek(0)
             
+            # Send embed with image
             file = File(buffer, 'ship.png')
             embed.set_image(url="attachment://ship.png")
             await ctx.send(embed=embed, file=file)
+
+# TODO : webhook logging
+
+

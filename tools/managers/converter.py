@@ -1,18 +1,16 @@
-from imaplib import Commands
 import re
 from datetime import timedelta
 from io import BytesIO
-from typing import Any, List, Optional, TypedDict, Union
+from typing import Any, List, Optional, TypedDict
 
-from discord import Emoji, Guild, Member, TextChannel, User
-import discord
+from discord import Emoji, Guild, TextChannel, User
 from discord.ext.commands import CommandError, Converter
 from discord.state import ConnectionState
 from discord.types.snowflake import Snowflake
 from discord.utils import get
 from typing_extensions import NotRequired, Type
 from yarl import URL
-from discord.ext import commands
+
 from tools.managers import Context
 from tools.utilities import human_join
 
@@ -492,55 +490,3 @@ class SoundboardSound:
     @property
     def sound(self) -> Any:
         raise NotImplementedError
-
-class Server(Converter):
-    @classmethod
-    async def fallback(cls, ctx: Context) -> "Server":
-        """Fallback method for cases where no server or invite is provided."""
-        message = ctx.message
-        if not message.content.strip():
-            raise CommandError("You must provide a server or invite code.")
-        return await cls.convert(ctx, message.content.strip())
-
-    @classmethod
-    async def convert(cls, ctx: Context, argument: str) -> "Server":
-        """Convert the argument to either a Guild or Invite."""
-        try:
-            invite = await ctx.bot.fetch_invite(argument)
-            return invite
-        except discord.errors.NotFound:
-            guild = ctx.bot.get_guild(int(argument)) or discord.utils.get(ctx.bot.guilds, name=argument)
-            if guild:
-                return guild
-            raise CommandError(f"Could not find a valid server or invite matching '{argument}'.")
-
-        except Exception as e:
-            raise CommandError(f"An error occurred while trying to process the input: {str(e)}")
-        
-class User(Converter):
-    async def convert(self, ctx: Context, argument: str) -> Union[discord.Member, discord.User]:
-        member = None
-        if argument.startswith("<@") and argument.endswith(">"):
-            argument = argument.replace("<@", "").replace(">", "").replace("!", "")
-        if ctx.guild:
-            try:
-                member = await commands.MemberConverter().convert(ctx, argument)
-                if member:
-                    return member
-            except CommandError:
-                pass 
-        try:
-            user = await ctx.bot.fetch_user(int(argument))
-            return user
-        except (ValueError, discord.NotFound):
-            pass
-        if "#" in argument:
-            name, discriminator = argument.rsplit("#", 1)
-            user = discord.utils.get(ctx.bot.users, name=name, discriminator=discriminator)
-            if user:
-                return user
-        user = discord.utils.get(ctx.bot.users, name=argument)
-        if user:
-            return user
-
-        raise CommandError(f"Could not find a Member or User matching: {argument}")

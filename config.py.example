@@ -1,9 +1,9 @@
-token: str = ""
+token: str = "bot token"
 
 prefix: str = ","
-owners: list[int] = ["id"]
+owners: list[int] = [userid1,userid2]
 
-activity: str = f",invite"
+activity: str = f"those who know :skull:"
 
 class Color:
     neutral: int = 0x2B2D31
@@ -35,12 +35,12 @@ class Emoji:
     deny: str = "<:deny:1246590822510497832>"
 
 
-class Database:     # Change this to whatever login information is set in docker-compose.yml
-    host: str = "" 
+class Database:
+    host: str = "rei-db"
     port: int = 5432
-    name: str = ""
-    user: str = ""
-    password: str = ""
+    name: str = "rei"
+    user: str = "rei"
+    password: str = "pN3PqpT86Nfr"
 
 
 class Webserver:
@@ -51,15 +51,14 @@ class Webserver:
 
 class Authorization:
     class Spotify:
-    # Get ID and Secret from https://developer.spotify.com/
-        client_id: str = ""
-        client_secret: str = ""
+        client_id: str = "enter client id"
+        client_secret: str = "enter client secret"
 
     class Lavalink:
-        host: str = ""
+        host: str = "rei-lavalink"
         port: int = 2333
-        password: str = ""
+        password: str = "youshallnotpass"
         secure: bool = False
-    # Get API key from https://www.remove.bg/ | Get API key from https://www.weatherapi.com/
-    removebg: str = ""
-    weather: str = ""
+
+    removebg: str = "get api key from remove.bg"
+    weather: str = "get api key from https://www.weatherapi.com/"

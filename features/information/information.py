@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Union
 
 import psutil  # type: ignore
 import pytz
@@ -14,24 +13,21 @@ from tools import services
 from tools.converters.basic import Date, Location
 from tools.managers.cog import Cog
 from tools.managers.context import Context
-from tools.managers.converter import Server
 from tools.utilities.humanize import comma, ordinal, size
 from tools.utilities.text import Plural, hidden, human_join
-from discord import app_commands
-from discord.ext.commands import hybrid_command
 
 import discord
 
 class Information(Cog):
     """Cog for Information commands."""
 
-    @hybrid_command(
+    @command(
         name="help",
         usage="<command>",
         example="lastfm",
         aliases=["commands", "h"],
     )
-    async def _help(self, ctx: Context, *, command: Union[str] = None):
+    async def _help(self, ctx: Context, *, command: str = None):
         """View all commands or information about a command"""
         if not command:
             return await ctx.neutral(
@@ -44,12 +40,12 @@ class Information(Cog):
 
         return await ctx.send_help(command_obj)
 
-    @hybrid_command(name="ping", aliases=["latency"])
+    @command(name="ping", aliases=["latency"])
     async def ping(self: "Information", ctx: Context):
         """View the bot's latency"""
         await ctx.neutral(f"Pong! `{self.bot.latency * 1000:.2f}ms`")
 
-    @hybrid_command(
+    @command(
         name="recentmembers",
         usage="<amount>",
         example="50",
@@ -74,7 +70,7 @@ class Information(Cog):
             )
         )
 
-    @hybrid_command(name="about", aliases=["botinfo", "system", "sys", "info", "stats"])
+    @command(name="about", aliases=["botinfo", "system", "sys", "info", "stats"])
     @cooldown(1, 5, BucketType.user)
     async def about(self, ctx: Context):
         """View information about the bot"""
@@ -120,7 +116,7 @@ class Information(Cog):
         )
         await ctx.send(embed=embed)
 
-    @hybrid_command(
+    @command(
         name="membercount",
         usage="<server>",
         example="/rei",
@@ -130,7 +126,7 @@ class Information(Cog):
         self,
         ctx: Context,
         *,
-        server: Server = None,
+        server: Guild | Invite = None,
     ):
         """View the amount of members in a server"""
         if isinstance(server, Invite):
@@ -175,7 +171,7 @@ class Information(Cog):
 
         await ctx.send(embed=embed)
 
-    @hybrid_command(
+    @command(
         name="icon",
         usage="<server>",
         example="/rei",
@@ -185,7 +181,7 @@ class Information(Cog):
         self,
         ctx: Context,
         *,
-        server: Union[Invite] = None,
+        server: Invite = None,
     ):
         """View a server icon"""
         if isinstance(server, Invite):
@@ -200,7 +196,7 @@ class Information(Cog):
         embed.set_image(url=server.icon)
         await ctx.send(embed=embed)
 
-    @hybrid_command(
+    @command(
         name="serverbanner",
         usage="<server>",
         example="/rei",
@@ -210,7 +206,7 @@ class Information(Cog):
         self,
         ctx: Context,
         *,
-        server: Union[Invite] = None,
+        server: Invite = None,
     ):
         """View a server banner"""
         if isinstance(server, Invite):
@@ -225,7 +221,7 @@ class Information(Cog):
         embed.set_image(url=server.banner)
         await ctx.send(embed=embed)
 
-    @hybrid_command(
+    @command(
         name="serverinfo",
         usage="<server>",
         example="/rei",
@@ -235,7 +231,7 @@ class Information(Cog):
         self,
         ctx: Context,
         *,
-        server: Union[Invite, Invite] = None,
+        server: Invite | Invite = None,
     ):
         """View information about a server"""
         if isinstance(server, Invite):
@@ -294,7 +290,7 @@ class Information(Cog):
 
         await ctx.send(embed=embed)
 
-    @hybrid_command(
+    @command(
         name="inviteinfo",
         usage="<server>",
         example="/rei",
@@ -350,13 +346,13 @@ class Information(Cog):
 
         await ctx.send(embed=embed)
 
-    @hybrid_command(
+    @command(
         name="userinfo",
         usage="<user>",
         example="igna",
         aliases=["whois", "uinfo", "ui", "user"],
     )
-    async def userinfo(self, ctx: Context, *, user: Union[Member, User] = None):
+    async def userinfo(self, ctx: Context, *, user: Member | User = None):
         """View information about a user."""
         user = user or ctx.author
 
@@ -430,13 +426,13 @@ class Information(Cog):
 
         return await ctx.send(embed=embed)
 
-    @hybrid_command(
+    @command(
         name="avatar",
         usage="<user>",
         example="igna",
         aliases=["av", "ab", "ag", "avi", "pfp"],
     )
-    async def avatar(self, ctx: Context, *, user: Union[Member, User] = None):
+    async def avatar(self, ctx: Context, *, user: Member | User = None):
         """View a user avatar"""
         user = user or ctx.author
 
@@ -444,13 +440,13 @@ class Information(Cog):
         embed.set_image(url=user.display_avatar)
         await ctx.send(embed=embed)
 
-    @hybrid_command(
+    @command(
         name="serveravatar",
         usage="<user>",
         example="igna",
         aliases=["sav", "sab", "sag", "savi", "spfp"],
     )
-    async def serveravatar(self, ctx: Context, *, user: Union[Member] = None):
+    async def serveravatar(self, ctx: Context, *, user: Member = None):
         """View a user server avatar"""
         user = user or ctx.author
         if not user.guild_avatar:
@@ -464,13 +460,13 @@ class Information(Cog):
         embed.set_image(url=user.guild_avatar)
         await ctx.send(embed=embed)
 
-    @hybrid_command(
+    @command(
         name="banner",
         usage="<user>",
         example="igna",
         aliases=["ub"],
     )
-    async def banner(self, ctx: Context, *, user: Union[Member, User] = None):
+    async def banner(self, ctx: Context, *, user: Member | User = None):
         """View a user banner"""
         user = user or ctx.author
         user = await self.bot.fetch_user(user.id)
@@ -488,7 +484,7 @@ class Information(Cog):
         embed.set_image(url=url)
         await ctx.send(embed=embed)
 
-    @hybrid_command(name="emojis", aliases=["emotes"])
+    @command(name="emojis", aliases=["emotes"])
     async def emojis(self, ctx: Context):
         """View all emojis in the server"""
         if not ctx.guild.emojis:
@@ -503,7 +499,7 @@ class Information(Cog):
             )
         )
 
-    @hybrid_command(name="stickers")
+    @command(name="stickers")
     async def stickers(self, ctx: Context):
         """View all stickers in the server"""
         if not ctx.guild.stickers:
@@ -521,7 +517,7 @@ class Information(Cog):
             )
         )
 
-    @hybrid_command(name="roles")
+    @command(name="roles")
     async def roles(self, ctx: Context):
         """View all roles in the server"""
         if not ctx.guild.roles[1:]:
@@ -539,8 +535,8 @@ class Information(Cog):
             )
         )
 
-    @hybrid_command(name="inrole", usage="<role>", example="helper", aliases=["hasrole"])
-    async def inrole(self, ctx: Context, *, role: Union[Role] = None):
+    @command(name="inrole", usage="<role>", example="helper", aliases=["hasrole"])
+    async def inrole(self, ctx: Context, *, role: Role = None):
         """View all members with a role"""
         role = role or ctx.author.top_role
 
@@ -556,7 +552,7 @@ class Information(Cog):
             )
         )
 
-    @hybrid_command(
+    @command(
         name="boosters",
         aliases=["boosts"],
         invoke_without_command=True,
@@ -594,7 +590,7 @@ class Information(Cog):
         aliases=["time", "tz"],
         invoke_without_command=True,
     )
-    async def timezone(self, ctx: Context, *, member: Union[Member] = None):
+    async def timezone(self, ctx: Context, *, member: Member = None):
         """View a member timezone"""
         member = member or ctx.author
 
@@ -653,7 +649,7 @@ class Information(Cog):
         )
 
 
-    @hybrid_command(
+    @command(
         name="xbox",
         usage="(gamertag)",
         example="madeitsick",
@@ -759,7 +755,7 @@ class Information(Cog):
         aliases=["bday", "bd"],
         invoke_without_command=True,
     )
-    async def birthday(self, ctx: Context, *, member: Union[Member] = None):
+    async def birthday(self, ctx: Context, *, member: Member = None):
         """View a member birthday"""
         member = member or ctx.author
 
@@ -849,7 +845,7 @@ class Information(Cog):
             )
         )
 
-    @hybrid_command(
+    @command(
         name="invite",
         aliases=["inv"],
     )
