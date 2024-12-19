@@ -97,8 +97,6 @@ class rei(AutoShardedBot):
                 reactions=True,
                 voice_states=True,
                 users=True,
-                dms=True,
-                private_channels=True,
             ),
             allowed_mentions=AllowedMentions(
                 everyone=False,
