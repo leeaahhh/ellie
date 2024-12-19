@@ -28,8 +28,9 @@ class Marriage(Cog):
             member.id,
         )
         if marriage:
+            partner_id = marriage['partner_id'] if marriage['user_id'] == member.id else marriage['user_id']
             return await ctx.error(
-                f"**{member.name}** is already married to **{self.bot.get_user(marriage.get('user_id')).name}**"
+                f"**{member.name}** is already married to **{self.bot.get_user(partner_id).name}**"
             )
 
         marriage = await self.bot.db.fetchrow(
@@ -37,8 +38,9 @@ class Marriage(Cog):
             ctx.author.id,
         )
         if marriage:
+            partner_id = marriage['partner_id'] if marriage['user_id'] == ctx.author.id else marriage['user_id']
             return await ctx.error(
-                f"You're already married to **{self.bot.get_user(marriage.get('user_id')).name}**"
+                f"You're already married to **{self.bot.get_user(partner_id).name}**"
             )
 
         if member == ctx.author:

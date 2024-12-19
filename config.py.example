@@ -35,8 +35,8 @@ class Emoji:
     deny: str = "<:deny:1246590822510497832>"
 
 
-class Database:
-    host: str = ""
+class Database:     # Change this to whatever login information is set in docker-compose.yml
+    host: str = "" 
     port: int = 5432
     name: str = ""
     user: str = ""
