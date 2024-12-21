@@ -41,7 +41,6 @@ class Fun(Cog):
         await getattr(ctx, ("approve" if response is True else "error"))(
             f"The **magic 8ball** says: `{response}` after {Plural(shakes):shake} ({question})"
         )
-
     @hybrid_command(name="roll", usage="(sides)", example="6", aliases=["dice"])
     @app_commands.describe(sides="Number of sides on the dice")
     async def roll(self: "Fun", ctx: Context, sides: int = 6):
