@@ -629,6 +629,7 @@ class Marriage(Cog):
                          fill=(255, 255, 255, 200), width=2)
 
     @hybrid_command(name="tree")
+    # TODO: Fix rendering issues when there are too many members
     async def tree(self, ctx: Context, member: Optional[Member] = None):
         """Display a family tree"""
         target = member or ctx.author

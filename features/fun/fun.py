@@ -472,19 +472,19 @@ class Fun(Cog):
         if member2 is None:
             member2 = ctx.author
         
-        if member == member2:
+        if member1 == member2:
             return await ctx.error("You can't ship someone with themselves!")
 
-        compatibility = ((member.id + member2.id) % 100) + 1
+        compatibility = ((member1.id + member2.id) % 100) + 1
         
         embed = Embed(
             title="💕 Love Calculator 💕",
-            description=f"**{member.name}** x **{member2.name}**\n**{compatibility}%**",
+            description=f"**{member1.name}** x **{member2.name}**\n**{compatibility}%**",
             color=Color.pink()
         )
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(str(member.display_avatar.url)) as resp:
+            async with session.get(str(member1.display_avatar.url)) as resp:
                 avatar1_data = await resp.read()
             async with session.get(str(member2.display_avatar.url)) as resp:
                 avatar2_data = await resp.read()
