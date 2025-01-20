@@ -20,6 +20,8 @@ from tools.utilities.text import Plural
 from discord import app_commands
 from discord.ext.commands import hybrid_command
 
+ASSETS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "assets")
+
 class Fun(Cog):
     """Cog for Fun commands."""
 
@@ -495,9 +497,10 @@ class Fun(Cog):
             draw.ellipse((0, 0) + size, fill=255)
             return mask
 
+        heart_path = os.path.join(ASSETS_DIR, "heart.png")
         with Image.open(io.BytesIO(avatar1_data)) as avatar1_img, \
              Image.open(io.BytesIO(avatar2_data)) as avatar2_img, \
-             Image.open("assets/heart.png") as heart_img:
+             Image.open(heart_path) as heart_img:
             
             size = (128, 128)
             avatar1_img = avatar1_img.convert('RGBA').resize(size)

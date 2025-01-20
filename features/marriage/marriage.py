@@ -11,6 +11,7 @@ from tools.managers.cog import Cog
 from tools.managers.context import Context
 from discord import app_commands
 from discord.ext.commands import hybrid_command
+import discord
 
 class Marriage(Cog):
     @hybrid_command(
@@ -452,7 +453,6 @@ class Marriage(Cog):
         return await ctx.neutral(f"Family marriage has been **{status}** for this server")
 
     async def _get_all_relationships(self, user_id: int, processed: Set[int] = None) -> Dict:
-        """Recursively fetch all family relationships"""
         if processed is None:
             processed = set()
         
@@ -461,9 +461,16 @@ class Marriage(Cog):
         
         processed.add(user_id)
         
+        user = self.bot.get_user(user_id)
+        if not user:
+            try:
+                user = await self.bot.fetch_user(user_id)
+            except discord.NotFound:
+                return None
+        
         data = {
             "id": user_id,
-            "name": self.bot.get_user(user_id).name,
+            "name": user.name,
             "partner": None,
             "partner_data": None,
             "parents": [],
