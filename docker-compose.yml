@@ -7,7 +7,6 @@ services:
     container_name: rei-bot
     depends_on:
       - db
-      - lavalink
     ports:
       - "59076:59076"
     restart: unless-stopped
