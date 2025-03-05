@@ -21,9 +21,6 @@ class GitHub(Cog):
         self.bot.loop.create_task(self.watch_commits())
         self.webhook_secret = config.Authorization.Github.webhook_secret
         
-        # Add webhook endpoint to the existing webserver
-        self.bot.get_cog('Webserver').app.router.add_post('/github/webhook', self.handle_webhook)
-        
     async def get_latest_commit(self, session: aiohttp.ClientSession, repo: str):
         """Fetch the latest commit from a repository"""
         async with session.get(f"{self.api_url}/repos/{repo}/commits") as response:
@@ -394,4 +391,8 @@ class GitHub(Cog):
             return await ctx.error("Could not find that GitHub repository, user, or organization")
 
 async def setup(bot):
-    await bot.add_cog(GitHub(bot))
+    github_cog = GitHub(bot)
+    webserver = bot.get_cog('Webserver')
+    if webserver and not webserver.app.frozen:
+        webserver.app.router.add_post('/github/webhook', github_cog.handle_webhook)
+    await bot.add_cog(github_cog)

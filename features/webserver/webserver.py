@@ -79,6 +79,11 @@ class Webserver(Cog):
             self.app.router.add_route(route.method, route.pattern, route)
             log.info(f"Added route for {route.pattern!r} ({route.method}).")
 
+        # Add GitHub webhook route if GitHub cog exists
+        github_cog = self.bot.get_cog('GitHub')
+        if github_cog:
+            self.app.router.add_post('/github/webhook', github_cog.handle_webhook)
+
     async def cog_load(self: "Webserver") -> None:
         host = config.Webserver.host
         port = config.Webserver.port
