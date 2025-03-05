@@ -1,10 +1,14 @@
 from typing import Optional
 from discord.ext.commands import Cog, command, Context, group, has_permissions
-from discord import Embed, TextChannel
+from discord import Embed, TextChannel, Webhook, WebhookType
+from aiohttp import web
 import aiohttp
 from datetime import datetime
 import config
 import asyncio
+import hmac
+import hashlib
+import json
 
 class GitHub(Cog):
     def __init__(self, bot):
@@ -12,6 +16,10 @@ class GitHub(Cog):
         self.api_url = "https://api.github.com"
         self.watching = True
         self.bot.loop.create_task(self.watch_commits())
+        self.webhook_secret = config.Authorization.Github.webhook_secret
+        
+        # Add webhook endpoint to the existing webserver
+        self.bot.get_cog('Webserver').app.router.add_post('/github/webhook', self.handle_webhook)
         
     async def get_latest_commit(self, session: aiohttp.ClientSession, repo: str):
         """Fetch the latest commit from a repository"""
@@ -131,6 +139,54 @@ class GitHub(Cog):
                 
             await asyncio.sleep(60)
 
+    async def handle_webhook(self, request):
+        # Verify webhook signature
+        signature = request.headers.get('X-Hub-Signature-256')
+        if not signature:
+            return web.Response(status=401)
+
+        payload = await request.read()
+        
+        # Verify webhook secret
+        expected = f"sha256={hmac.new(self.webhook_secret.encode(), payload, hashlib.sha256).hexdigest()}"
+        if not hmac.compare_digest(signature, expected):
+            return web.Response(status=401)
+
+        data = json.loads(payload)
+        event = request.headers.get('X-GitHub-Event')
+
+        # Get repository and guild info
+        repo_name = data['repository']['full_name']
+        webhook_configs = await self.bot.db.fetch(
+            "SELECT guild_id, channel_id FROM github_watches WHERE repository = $1",
+            repo_name
+        )
+
+        if event == 'push':
+            await self.handle_push_event(data, webhook_configs)
+        elif event == 'pull_request':
+            await self.handle_pr_event(data, webhook_configs)
+
+        return web.Response(status=200)
+
+    async def handle_push_event(self, data, webhook_configs):
+        embed = Embed(
+            title=f"New commits to {data['repository']['full_name']}",
+            color=config.Color.neutral
+        )
+        
+        for commit in data['commits']:
+            embed.add_field(
+                name=commit['id'][:7],
+                value=f"[`{commit['message']}`]({commit['url']})\nby {commit['author']['name']}",
+                inline=False
+            )
+
+        for config in webhook_configs:
+            channel = self.bot.get_channel(config['channel_id'])
+            if channel:
+                await channel.send(embed=embed)
+
     @group(
         name="commits",
         aliases=["commit"],
@@ -148,31 +204,30 @@ class GitHub(Cog):
     @has_permissions(manage_guild=True)
     async def commits_watch(self, ctx: Context, channel: TextChannel, *, repository: str):
         """Watch a repository for new commits"""
-        # clearly retarded if you put a repository that doesn't exist
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{self.api_url}/repos/{repository}") as response:
-                if response.status != 200:
-                    return await ctx.error("Repository not found")
-                
-                latest_commit = await self.get_latest_commit(session, repository)
-                if not latest_commit:
-                    return await ctx.error("Could not fetch repository commits")
-                
-                # i hate psql on god
-                await self.bot.db.execute(
-                    """
-                    INSERT INTO github_watches (guild_id, channel_id, repository, last_commit_sha)
-                    VALUES ($1, $2, $3, $4)
-                    ON CONFLICT (guild_id, repository) 
-                    DO UPDATE SET channel_id = $2, last_commit_sha = $4
-                    """,
-                    ctx.guild.id,
-                    channel.id,
-                    repository,
-                    latest_commit['sha']
-                )
-                
-                await ctx.approve(f"Now watching **{repository}** in {channel.mention}")
+        
+        # Create webhook URL for the repository
+        webhook_url = f"{config.Webserver.allowed_domain}/github/webhook"
+        
+        # Store in database
+        await self.bot.db.execute(
+            """
+            INSERT INTO github_watches (guild_id, channel_id, repository)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (guild_id, repository) 
+            DO UPDATE SET channel_id = $2
+            """,
+            ctx.guild.id,
+            channel.id,
+            repository
+        )
+
+        # Send setup instructions
+        await ctx.approve(
+            f"Now watching **{repository}** in {channel.mention}\n"
+            f"Please add this webhook URL to your GitHub repository settings:\n"
+            f"`{webhook_url}`\n"
+            f"And use this secret:\n`{self.webhook_secret}`"
+        )
 
     @commits.command(
         name="unwatch",
