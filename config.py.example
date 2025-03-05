@@ -63,3 +63,6 @@ class Authorization:
     # Get API key from https://www.remove.bg/ | Get API key from https://www.weatherapi.com/
     removebg: str = ""
     weather: str = ""
+
+      class Github:
+        webhook_secret: str = "fantasea67"  # Generate a secure random string
