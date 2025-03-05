@@ -172,7 +172,7 @@ class GitHub(Cog):
     async def handle_push_event(self, data, webhook_configs):
         embed = Embed(
             title=f"New commits to {data['repository']['full_name']}",
-            color=config.Color.neutral
+            color=0x2F3136  # Using direct color code instead of config.Color
         )
         
         for commit in data['commits']:
