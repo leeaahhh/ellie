@@ -205,8 +205,8 @@ class GitHub(Cog):
     async def commits_watch(self, ctx: Context, channel: TextChannel, *, repository: str):
         """Watch a repository for new commits"""
         
-        # Create webhook URL for the repository
-        webhook_url = f"{config.Webserver.allowed_domain}/github/webhook"
+        # Generate webhook URL using the external domain
+        webhook_url = f"{config.Authorization.Github.webhook_domain}/github/webhook"
         
         # Store in database
         await self.bot.db.execute(
@@ -226,7 +226,8 @@ class GitHub(Cog):
             f"Now watching **{repository}** in {channel.mention}\n"
             f"Please add this webhook URL to your GitHub repository settings:\n"
             f"`{webhook_url}`\n"
-            f"And use this secret:\n`{self.webhook_secret}`"
+            f"And use this secret:\n`{self.webhook_secret}`\n"
+            f"Make sure to select 'application/json' as the content type"
         )
 
     @commits.command(
