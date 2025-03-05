@@ -10,6 +10,9 @@ import hmac
 import hashlib
 import json
 
+from tools.managers.cog import Cog
+from tools.managers.context import Context
+
 class GitHub(Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -389,3 +392,6 @@ class GitHub(Cog):
                     return await ctx.send(embed=embed)
                     
             return await ctx.error("Could not find that GitHub repository, user, or organization")
+
+async def setup(bot):
+    await bot.add_cog(GitHub(bot))
