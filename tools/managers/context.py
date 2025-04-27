@@ -459,7 +459,7 @@ class Context(BaseContext):
         await self.message.add_reaction("✅")
 
     async def check(self):
-        return await self.send(content="😈")
+        return await self.send(content="https://cdn.discordapp.com/attachments/1312131653937790996/1366025233969971230/1745697883789-ezgif.com-resize.gif?ex=680f71a3&is=680e2023&hm=1445f8e5a4aafb0e961f138a3d6ef7e8d5e53346b8c17d3240480d762f929dfb&")
 
     async def prompt(self, message: str, member: Member = None, **kwargs):
         if member:
