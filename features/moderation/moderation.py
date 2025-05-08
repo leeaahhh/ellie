@@ -1022,7 +1022,7 @@ class Moderation(Cog):
         name="purge",
         usage="<user> (amount)",
         example="igna 15",
-        aliases=["clear", "prune", "c"],
+        aliases=["prune", "c"],
         invoke_without_command=True,
     )
     @has_permissions(manage_messages=True)

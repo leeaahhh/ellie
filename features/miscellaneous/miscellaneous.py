@@ -957,38 +957,6 @@ class Miscellaneous(Cog):
         await ctx.approve("Cleared your **name history**")
 
     @command(
-        name="image",
-        usage="(query)",
-        example="Clairo",
-        aliases=["img", "im", "i"],
-    )
-    async def image(self: "Miscellaneous", ctx: Context, *, query: str):
-        """Search Google for an image"""
-        response = await self.bot.session.get(
-            "https://notsobot.com/api/search/google/images",
-            params=dict(
-                query=query.replace(" ", ""),
-                safe="false" if ctx.channel.is_nsfw() else "true",
-            ),
-        )
-        data = await response.json()
-
-        if not data:
-            return await ctx.error(f"Couldn't find any images for **{query}**")
-
-        entries = [
-            Embed(
-                url=entry.get("url"),
-                title=entry.get("header"),
-                description=entry.get("description"),
-            ).set_image(url=entry["image"]["url"])
-            for entry in data
-            if entry.get("header") not in ("TikTok", "Facebook", "Instagram")
-        ]
-        await ctx.paginate(entries)
-
-
-    @command(
         name="translate",
         usage="<language> (text)",
         example="Spanish Hello!",

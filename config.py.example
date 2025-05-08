@@ -67,3 +67,7 @@ class Authorization:
       class Github:
         webhook_secret: str = "fantasea67"  # Generate a secure random string
         webhook_secret: str = "https://example.com" # Your external webhook domain
+    
+        class AI:
+        api_key: str = "ng-XXX"  # Replace with your actual API key
+        base_url: str = "https://api.naga.ac/v1"

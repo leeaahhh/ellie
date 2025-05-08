@@ -27,3 +27,4 @@ aiohttp
 uwuify
 yt-dlp
 wavelink
+openai

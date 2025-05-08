@@ -360,3 +360,33 @@ CREATE TABLE IF NOT EXISTS github_watches (
     last_commit_sha TEXT,
     PRIMARY KEY (guild_id, repository)
 );
+
+--- Leveling
+CREATE SCHEMA IF NOT EXISTS leveling;
+
+CREATE TABLE IF NOT EXISTS leveling.users (
+    guild_id BIGINT,
+    user_id BIGINT,
+    xp BIGINT DEFAULT 0,
+    level BIGINT DEFAULT 0,
+    last_message TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (guild_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS leveling.settings (
+    guild_id BIGINT,
+    enabled BOOLEAN DEFAULT TRUE,
+    xp_rate INTEGER DEFAULT 15,
+    xp_cooldown INTEGER DEFAULT 60,
+    level_up_channel BIGINT,
+    level_up_message TEXT DEFAULT 'Congratulations {user.mention}! You reached level {level}!',
+    PRIMARY KEY (guild_id)
+);
+
+--- AI
+CREATE SCHEMA IF NOT EXISTS ai;
+
+CREATE TABLE IF NOT EXISTS ai.channels (
+    guild_id BIGINT PRIMARY KEY,
+    channel_id BIGINT NOT NULL
+);
