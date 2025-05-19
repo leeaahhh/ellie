@@ -5,46 +5,53 @@ import config
 import os
 from tools.managers.cog import Cog
 from tools.managers.context import Context
+import asyncio
+import datetime
 
 class AI(Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.personalities = {}
-        self.active_personality = None
         self.conversation_history = {}
+        self.ping_reply_enabled = True
+        self.active_channels = set()  # Set of channel IDs
+        self.last_message_times = {}  # channel_id: datetime
+        self.dead_channel_check_interval = 60  # seconds
+        self.dead_channel_threshold = 600  # seconds (10 minutes)
+        self.recent_users = {}  # channel_id: set of user_ids
+        self.active_join_threshold = 3  # users
+        self.active_join_window = 120  # seconds
         try:
             self.client = OpenAI(
                 base_url=config.Authorization.AI.base_url,
                 api_key=config.Authorization.AI.api_key
             )
-            self.load_personalities()
         except Exception as e:
             print(f"Error initializing OpenAI client: {e}")
             self.client = None
-
-    def load_personalities(self):
-        instructions_dir = "instructions"
-        if not os.path.exists(instructions_dir):
-            os.makedirs(instructions_dir)
-            return
-
-        for file in os.listdir(instructions_dir):
-            if file.endswith(".txt"):
-                name = file[:-4]
-                with open(os.path.join(instructions_dir, file), "r", encoding="utf-8") as f:
-                    self.personalities[name] = f.read().strip()
+        self.bot.loop.create_task(self.dead_channel_monitor())
 
     async def cog_load(self):
         try:
             await self.bot.db.execute("CREATE SCHEMA IF NOT EXISTS ai")
             await self.bot.db.execute("""
                 CREATE TABLE IF NOT EXISTS ai.channels (
+                    guild_id BIGINT NOT NULL,
+                    channel_id BIGINT NOT NULL,
+                    PRIMARY KEY (guild_id, channel_id)
+                )
+            """)
+            await self.bot.db.execute("""
+                CREATE TABLE IF NOT EXISTS ai.settings (
                     guild_id BIGINT PRIMARY KEY,
-                    channel_id BIGINT NOT NULL
+                    ping_reply_enabled BOOLEAN DEFAULT TRUE
                 )
             """)
         except Exception as e:
             print(f"Error setting up AI database: {e}")
+        # Load settings and channels for all guilds on cog load
+        for guild in self.bot.guilds:
+            await self.load_settings(guild.id)
+            await self.load_active_channels(guild.id)
 
     def get_user_history_key(self, message: Message) -> str:
         return f"{message.guild.id}:{message.channel.id}:{message.author.id}"
@@ -53,9 +60,6 @@ class AI(Cog):
         messages = []
         current = message
         history_key = self.get_user_history_key(message)
-        
-        if self.active_personality and self.active_personality in self.personalities:
-            messages.append({"role": "system", "content": self.personalities[self.active_personality]})
         
         messages.append({"role": "user", "content": current.content})
         
@@ -80,49 +84,6 @@ class AI(Cog):
         
         self.conversation_history[history_key] = messages[-max_messages:]
         return messages
-
-    @hybrid_command(
-        name="personality",
-        usage="<name>",
-        example="luna",
-        aliases=["persona"]
-    )
-    @has_permissions(manage_guild=True)
-    async def set_personality(self, ctx: Context, name: str):
-        if name not in self.personalities:
-            embed = Embed(
-                color=0xFF0000,
-                description=f"Personality '{name}' not found. Available personalities: {', '.join(self.personalities.keys())}"
-            )
-            return await ctx.send(embed=embed)
-            
-        self.active_personality = name
-        embed = Embed(
-            color=0x00FF00,
-            description=f"AI personality set to {name}"
-        )
-        await ctx.send(embed=embed)
-
-    @hybrid_command(
-        name="personalities",
-        usage="",
-        example="",
-        aliases=["personas"]
-    )
-    async def list_personalities(self, ctx: Context):
-        if not self.personalities:
-            embed = Embed(
-                color=0xFF0000,
-                description="No personalities found in the instructions directory"
-            )
-            return await ctx.send(embed=embed)
-            
-        embed = Embed(
-            color=config.Color.neutral,
-            title="Available AI Personalities",
-            description="\n".join(f"• {name}" for name in self.personalities.keys())
-        )
-        await ctx.send(embed=embed)
 
     @hybrid_command(
         name="wipechat",
@@ -194,29 +155,76 @@ class AI(Cog):
         if message.author.bot or not message.guild or not self.client:
             return
 
-        is_ai_channel = await self.bot.db.fetchval(
-            "SELECT channel_id FROM ai.channels WHERE guild_id = $1",
-            message.guild.id
-        )
-        
-        is_reply_to_ai = False
-        if message.reference and message.reference.message_id:
-            try:
-                referenced = await message.channel.fetch_message(message.reference.message_id)
-                is_reply_to_ai = referenced.author == self.bot.user
-            except:
-                pass
+        guild_id = message.guild.id
+        await self.load_settings(guild_id)
+        await self.load_active_channels(guild_id)
 
-        if not (is_ai_channel and message.channel.id == is_ai_channel) and not is_reply_to_ai:
+        # Check if message is in an active channel or is a ping to the bot
+        is_active_channel = message.channel.id in self.active_channels
+        is_ping = self.ping_reply_enabled and self.bot.user in message.mentions
+
+        # Only respond if in active channel or pinged
+        if not (is_active_channel or is_ping):
             return
+
+        # Don't reply to itself
+        if message.author == self.bot.user:
+            return
+
+        # Track last message time for dead channel detection
+        if is_active_channel:
+            self.last_message_times[message.channel.id] = datetime.datetime.utcnow()
+            # Track recent users for active join
+            now = datetime.datetime.utcnow()
+            if message.channel.id not in self.recent_users:
+                self.recent_users[message.channel.id] = []
+            self.recent_users[message.channel.id].append((message.author.id, now))
+            # Remove old entries
+            self.recent_users[message.channel.id] = [
+                (uid, t) for uid, t in self.recent_users[message.channel.id]
+                if (now - t).total_seconds() < self.active_join_window
+            ]
+            unique_users = set(uid for uid, _ in self.recent_users[message.channel.id])
+            if len(unique_users) >= self.active_join_threshold:
+                # Bot joins the conversation
+                N = 10
+                history = []
+                async for msg in message.channel.history(limit=N, oldest_first=False):
+                    if msg.author == self.bot.user:
+                        history.insert(0, {"role": "assistant", "content": msg.content})
+                    else:
+                        history.insert(0, {"role": "user", "content": msg.content})
+                async with message.channel.typing():
+                    try:
+                        response = self.client.chat.completions.create(
+                            model='shapesinc/reiayanami-y8ux',
+                            messages=history
+                        )
+                        content = response.choices[0].message.content
+                        await message.channel.send(content)
+                    except Exception as e:
+                        embed = Embed(
+                            color=0xFF0000,
+                            description=f"Error: {str(e)}"
+                        )
+                        await message.channel.send(embed=embed)
+                # Reset recent users to avoid spamming
+                self.recent_users[message.channel.id] = []
+
+        # Fetch last N messages for context
+        N = 10
+        history = []
+        async for msg in message.channel.history(limit=N, oldest_first=False):
+            if msg.author == self.bot.user:
+                history.insert(0, {"role": "assistant", "content": msg.content})
+            else:
+                history.insert(0, {"role": "user", "content": msg.content})
 
         async with message.channel.typing():
             try:
-                messages = await self.get_conversation_history(message)
-                
                 response = self.client.chat.completions.create(
-                    model='gpt-4o-mini',
-                    messages=messages
+                    model='shapesinc/reiayanami-y8ux',
+                    messages=history
                 )
                 content = response.choices[0].message.content
                 await message.reply(content)
@@ -246,7 +254,7 @@ class AI(Cog):
                 messages = await self.get_conversation_history(ctx.message)
                 
                 response = self.client.chat.completions.create(
-                    model='gpt-4o-mini',
+                    model='shapesinc/reiayanami-y8ux',
                     messages=messages
                 )
                 content = response.choices[0].message.content
@@ -299,6 +307,124 @@ class AI(Cog):
                     description=f"Error generating image: {str(e)}"
                 )
                 await ctx.send(embed=embed)
+
+    async def load_settings(self, guild_id):
+        row = await self.bot.db.fetchrow("SELECT ping_reply_enabled FROM ai.settings WHERE guild_id = $1", guild_id)
+        if row:
+            self.ping_reply_enabled = row["ping_reply_enabled"] if row["ping_reply_enabled"] is not None else True
+        else:
+            await self.save_settings(guild_id)
+
+    async def save_settings(self, guild_id):
+        await self.bot.db.execute(
+            """
+            INSERT INTO ai.settings (guild_id, ping_reply_enabled)
+            VALUES ($1, $2)
+            ON CONFLICT (guild_id) DO UPDATE SET ping_reply_enabled = $2
+            """,
+            guild_id, self.ping_reply_enabled
+        )
+
+    async def load_active_channels(self, guild_id):
+        rows = await self.bot.db.fetch("SELECT channel_id FROM ai.channels WHERE guild_id = $1", guild_id)
+        self.active_channels = set(row["channel_id"] for row in rows)
+
+    async def add_active_channel(self, guild_id, channel_id):
+        await self.bot.db.execute(
+            "INSERT INTO ai.channels (guild_id, channel_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            guild_id, channel_id
+        )
+        self.active_channels.add(channel_id)
+
+    async def remove_active_channel(self, guild_id, channel_id):
+        await self.bot.db.execute(
+            "DELETE FROM ai.channels WHERE guild_id = $1 AND channel_id = $2",
+            guild_id, channel_id
+        )
+        self.active_channels.discard(channel_id)
+
+    @hybrid_command(
+        name="panel",
+        usage="",
+        example="",
+        aliases=["config", "settings"]
+    )
+    @has_permissions(manage_guild=True)
+    async def panel(self, ctx: Context):
+        guild_id = ctx.guild.id
+        await self.load_settings(guild_id)
+        await self.load_active_channels(guild_id)
+        embed = Embed(
+            color=0x00BFFF,
+            title="AI Configuration Panel",
+            description=f"**Ping Reply:** {'Enabled' if self.ping_reply_enabled else 'Disabled'}\n\n"
+                        f"**Active Channels:**\n" + ("\n".join(f"<#{cid}>" for cid in self.active_channels) if self.active_channels else "None")
+        )
+        embed.set_footer(text="Use /ai toggleping, /ai addchannel, /ai removechannel to configure.")
+        await ctx.send(embed=embed)
+
+    @hybrid_command(
+        name="toggleping",
+        usage="",
+        example="",
+        aliases=["pingtoggle"]
+    )
+    @has_permissions(manage_guild=True)
+    async def toggle_ping(self, ctx: Context):
+        self.ping_reply_enabled = not self.ping_reply_enabled
+        await self.save_settings(ctx.guild.id)
+        await ctx.send(embed=Embed(color=0x00FF00, description=f"Ping reply {'enabled' if self.ping_reply_enabled else 'disabled'}."))
+
+    @hybrid_command(
+        name="addchannel",
+        usage="<channel>",
+        example="#general",
+        aliases=["enablechannel"]
+    )
+    @has_permissions(manage_guild=True)
+    async def add_channel(self, ctx: Context, channel: TextChannel):
+        await self.add_active_channel(ctx.guild.id, channel.id)
+        await ctx.send(embed=Embed(color=0x00FF00, description=f"Channel {channel.mention} added to AI active channels."))
+
+    @hybrid_command(
+        name="removeactivechannel",
+        usage="<channel>",
+        example="#general",
+        aliases=["disableactivechannel"]
+    )
+    @has_permissions(manage_guild=True)
+    async def remove_active_channel(self, ctx: Context, channel: TextChannel):
+        await self.remove_active_channel(ctx.guild.id, channel.id)
+        await ctx.send(embed=Embed(color=0x00FF00, description=f"Channel {channel.mention} removed from AI active channels."))
+
+    async def dead_channel_monitor(self):
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            now = datetime.datetime.utcnow()
+            for channel_id in list(self.active_channels):
+                channel = self.bot.get_channel(channel_id)
+                if not channel:
+                    continue
+                last_time = self.last_message_times.get(channel_id)
+                if not last_time:
+                    # Fetch last message time if not cached
+                    try:
+                        last_msg = await channel.history(limit=1).flatten()
+                        if last_msg:
+                            self.last_message_times[channel_id] = last_msg[0].created_at.replace(tzinfo=None)
+                            last_time = self.last_message_times[channel_id]
+                    except Exception:
+                        continue
+                if not last_time:
+                    continue
+                if (now - last_time).total_seconds() > self.dead_channel_threshold:
+                    # Channel is dead, send a starter message
+                    try:
+                        await channel.send("It's been quiet here! Anyone want to chat?")
+                        self.last_message_times[channel_id] = now
+                    except Exception:
+                        pass
+            await asyncio.sleep(self.dead_channel_check_interval)
 
 async def setup(bot):
     await bot.add_cog(AI(bot)) 
