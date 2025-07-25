@@ -327,20 +327,6 @@ class Roleplay(commands.Cog):
         await ctx.send(embed=embed)
 
     @hybrid_command(
-        name="kick",
-        usage="(member)",
-        example="@user",
-        description="Kick someone or yourself."
-    )
-    async def kick(self, ctx, member: discord.Member = None):
-        desc = self._get_action_description("kick", ctx.author, member)
-        image = await self._get_neko_image("kick")
-        embed = discord.Embed(description=desc, color=config.Color.neutral)
-        if image:
-            embed.set_image(url=image)
-        await ctx.send(embed=embed)
-
-    @hybrid_command(
         name="kiss",
         usage="(member)",
         example="@user",
