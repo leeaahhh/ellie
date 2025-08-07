@@ -341,7 +341,7 @@ class Miscellaneous(Cog):
             return
         if not message.content:
             return
-        if "discord.com/channels" not in message.content:
+        if "discordapp.com/channels" not in message.content:
             return
         if message.guild and message.guild.id != ctx.guild.id:
             return
