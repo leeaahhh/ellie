@@ -1,4 +1,4 @@
-# Rei
+# Ellie
 
 > A highly customizable, fast, and efficient Discord bot with last.fm integration, minimalistic embeds, and more.
 
@@ -11,7 +11,7 @@
 - **Jishaku for management:** Advanced management features.
 - **Moderation commands:** Useful commands to manage your server.
 
-## Running Rei
+## Running Ellie
 
 > **Note:** You must have Docker [installed](https://docs.docker.com/engine/install/) on your machine.
 
