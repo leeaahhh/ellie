@@ -2,7 +2,7 @@ services:
   bot:
     build: .
     command: python3 -O main.py
-    container_name: rei-bot
+    container_name: ellie-bot
     depends_on:
       - db
     ports:
@@ -13,11 +13,11 @@ services:
       - 76.76.10.2
 
   db:
-    container_name: rei-db
+    container_name: ellie-db
     environment:
-      - POSTGRES_DB=rei
+      - POSTGRES_DB=ellie
       - POSTGRES_PASSWORD=pN3PqpT86Nfr
-      - POSTGRES_USER=rei
+      - POSTGRES_USER=ellie
     image: postgres:alpine
     expose:
       - "5432"
