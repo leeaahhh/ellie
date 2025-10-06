@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING
 from .starboard import Starboard
 
 if TYPE_CHECKING:
-    from tools.rei import rei
+    from tools.ellie import ellie
 
 
-async def setup(bot: "rei"):
+async def setup(bot: "ellie"):
     await bot.add_cog(Starboard(bot))

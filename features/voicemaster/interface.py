@@ -8,7 +8,7 @@ from discord.utils import format_dt
 
 import config
 from tools.converters.basic import activity_types
-from tools.rei import rei
+from tools.ellie import ellie
 from tools.utilities.text import Plural
 
 
@@ -96,8 +96,8 @@ class ActivitySelection(Select):
 
 
 class Interface(View):
-    def __init__(self, bot: rei):
-        self.bot: rei = bot
+    def __init__(self, bot: ellie):
+        self.bot: ellie = bot
         super().__init__(
             timeout=None,
         )

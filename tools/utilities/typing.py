@@ -113,7 +113,7 @@ async def configure_reskin(bot: Bot, channel: TextChannel, webhooks: dict):
 
     try:
         webhook = await wait_for(
-            channel.create_webhook(name="rei reskin"),
+            channel.create_webhook(name="ellie reskin"),
             timeout=5,
         )
     except Exception:

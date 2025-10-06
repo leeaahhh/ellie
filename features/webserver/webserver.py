@@ -12,7 +12,7 @@ from aiohttp.web import middleware
 
 import config
 from tools.managers import logging
-from tools.rei import rei
+from tools.ellie import ellie
 
 log = logging.getLogger(__name__)
 
@@ -43,8 +43,8 @@ def route(pattern: str, method: str = "GET") -> Callable:
 
 
 class Webserver(Cog):
-    def __init__(self, bot: rei):
-        self.bot: rei = bot
+    def __init__(self, bot: ellie):
+        self.bot: ellie = bot
 
         @middleware
         async def cors_middleware(request, handler):

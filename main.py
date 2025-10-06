@@ -1,9 +1,9 @@
 from discord.ext.commands import CommandError
 
 from tools.managers.context import Context
-from tools.rei import rei
+from tools.ellie import ellie
 
-bot = rei()
+bot = ellie()
 
 @bot.event
 async def on_ready():

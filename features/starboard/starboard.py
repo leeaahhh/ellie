@@ -14,15 +14,15 @@ from discord.ext.commands import group, has_permissions
 
 from tools.managers.cog import Cog
 from tools.managers.context import Context
-from tools.rei import rei
+from tools.ellie import ellie
 from tools.utilities.text import shorten
 
 
 class Starboard(Cog):
     """Cog for Starboard commands."""
 
-    def __init__(self: "Starboard", bot: rei):
-        self.bot: rei = bot
+    def __init__(self: "Starboard", bot: ellie):
+        self.bot: ellie = bot
         self._locks: WeakValueDictionary[int, asyncio.Lock] = WeakValueDictionary()
         self._about_to_be_deleted: set[int] = set()
 

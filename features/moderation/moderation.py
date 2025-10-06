@@ -179,13 +179,13 @@ class Moderation(Cog):
     )
     @has_permissions(manage_guild=True)
     async def _set(self, ctx: Context):
-        """Set server settings through rei"""
+        """Set server settings through ellie"""
         await ctx.send_help()
 
     @_set.command(
         name="name",
         usage="(text)",
-        example="rei guild",
+        example="ellie guild",
         aliases=["n"],
     )
     @has_permissions(manage_guild=True)
@@ -402,7 +402,7 @@ class Moderation(Cog):
     @nickname.group(
         name="force",
         usage="(member) <duration> (text)",
-        example="rei 7d shito",
+        example="ellie 7d shito",
         aliases=["lock"],
         invoke_without_command=True,
     )
@@ -448,7 +448,7 @@ class Moderation(Cog):
     @nickname_force.command(
         name="cancel",
         usage="(member)",
-        example="rei",
+        example="ellie",
         aliases=["stop", "end"],
     )
     @has_permissions(manage_nicknames=True)
@@ -2473,7 +2473,7 @@ class Moderation(Cog):
         ctx: Context,
         amount: int = 50,
     ):
-        """Clean up messages from rei"""
+        """Clean up messages from ellie"""
         amount = min(amount, 2000)
 
         def check(message: Message):
@@ -2499,7 +2499,7 @@ class Moderation(Cog):
     @hybrid_command(
         name="uwuify",
         usage="(member) <duration>",
-        example="rei 10m",
+        example="ellie 10m",
         parameters={
             "silent": {
                 "require_value": False,
@@ -2525,13 +2525,13 @@ class Moderation(Cog):
 
         webhook = None
         for hook in await ctx.channel.webhooks():
-            if hook.name == "rei-uwu":
+            if hook.name == "ellie-uwu":
                 webhook = hook
                 break
 
         if not webhook:
             webhook = await ctx.channel.create_webhook(
-                name="rei-uwu",
+                name="ellie-uwu",
                 reason=f"Uwuify webhook created by {ctx.author} ({ctx.author.id})",
             )
 

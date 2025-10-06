@@ -80,7 +80,7 @@ def identify(self):
 
 DiscordWebSocket.identify = identify
 
-class rei(AutoShardedBot):
+class ellie(AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(
             command_prefix=self.get_prefix,
@@ -160,13 +160,13 @@ class rei(AutoShardedBot):
         self.sticky_locks = {}
         self.redis: cache = cache
 
-    def run(self: "rei"):
+    def run(self: "ellie"):
         super().run(
             config.token,
             reconnect=True,
         )
 
-    async def setup_hook(self: "rei"):
+    async def setup_hook(self: "ellie"):
         self.session = ClientSession(json_serialize=lambda x: dumps(x).decode())
         await self.create_pool()
         log.info("logging into %s", self.user)
@@ -250,7 +250,7 @@ class rei(AutoShardedBot):
             "SELECT * FROM config WHERE guild_id = $1", guild_id
         )
 
-    async def get_context(self: "rei", origin: Message, *, cls=None) -> Context:
+    async def get_context(self: "ellie", origin: Message, *, cls=None) -> Context:
         return await super().get_context(
             origin,
             cls=cls or Context,
@@ -467,7 +467,7 @@ class rei(AutoShardedBot):
 
         await self.process_commands(after)
 
-    async def on_message(self: "rei", message: Message):
+    async def on_message(self: "ellie", message: Message):
         if not self.is_ready() or not message.guild or message.author.bot:
             return
 

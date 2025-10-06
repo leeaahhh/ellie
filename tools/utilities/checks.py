@@ -81,7 +81,7 @@ def donator(booster: bool = False):
 
             if not user or not user.premium_since:
                 raise commands.CommandError(
-                    f"You must **boost** the rei [**Discord Server**](https://discord.gg/3mwJgnCrZw) to use `{ctx.command.qualified_name}`"
+                    f"You must **boost** the ellie [**Discord Server**](https://discord.gg/3mwJgnCrZw) to use `{ctx.command.qualified_name}`"
                 )
 
             return True

@@ -75,7 +75,7 @@ class Developer(Cog):
     @blacklist.command(
         name="remove",
         usage="(user)",
-        example="rei",
+        example="ellie",
         aliases=["delete", "del", "rm"],
     )
     @is_owner()
@@ -93,7 +93,7 @@ class Developer(Cog):
     @blacklist.command(
         name="check",
         usage="(user)",
-        example="rei",
+        example="ellie",
         aliases=["note"],
     )
     @is_owner()

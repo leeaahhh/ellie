@@ -35,7 +35,7 @@ class Information(Cog):
         """View all commands or information about a command"""
         if not command:
             return await ctx.neutral(
-                f"Click [**here**](https://rei.nerv.run/commands) to view **{len(set(self.bot.walk_commands()))}** commands"
+                f"Click [**here**](https://ellie.nerv.run/commands) to view **{len(set(self.bot.walk_commands()))}** commands"
             )
 
         command_obj: Command | Group = self.bot.get_command(command)
@@ -123,7 +123,7 @@ class Information(Cog):
     @hybrid_command(
         name="membercount",
         usage="<server>",
-        example="/rei",
+        example="/ellie",
         aliases=["members", "mc"],
     )
     async def membercount(
@@ -178,7 +178,7 @@ class Information(Cog):
     @hybrid_command(
         name="icon",
         usage="<server>",
-        example="/rei",
+        example="/ellie",
         aliases=["servericon", "sicon", "guildicon", "gicon"],
     )
     async def icon(
@@ -203,7 +203,7 @@ class Information(Cog):
     @hybrid_command(
         name="serverbanner",
         usage="<server>",
-        example="/rei",
+        example="/ellie",
         aliases=["sbanner", "guildbanner", "gbanner"],
     )
     async def serverbanner(
@@ -228,7 +228,7 @@ class Information(Cog):
     @hybrid_command(
         name="serverinfo",
         usage="<server>",
-        example="/rei",
+        example="/ellie",
         aliases=["sinfo", "guildinfo", "ginfo", "si", "gi"],
     )
     async def serverinfo(
@@ -297,7 +297,7 @@ class Information(Cog):
     @hybrid_command(
         name="inviteinfo",
         usage="<server>",
-        example="/rei",
+        example="/ellie",
         aliases=["iinfo", "ii"],
     )
     async def inviteinfo(

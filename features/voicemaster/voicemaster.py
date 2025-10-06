@@ -10,7 +10,7 @@ import config
 from tools.converters import Bitrate, Member, Region, Role
 from tools.managers import Context, ratelimiter
 from tools.managers.cog import Cog
-from tools.rei import rei
+from tools.ellie import ellie
 
 from .interface import Interface
 
@@ -18,8 +18,8 @@ from .interface import Interface
 class VoiceMaster(Cog):
     """Cog for VoiceMaster commands."""
 
-    def __init__(self, bot: rei):
-        self.bot: rei = bot
+    def __init__(self, bot: ellie):
+        self.bot: ellie = bot
         self.bot.add_view(Interface(bot))
 
     async def cog_load(self):
@@ -296,16 +296,16 @@ class VoiceMaster(Cog):
         embed.add_field(
             name="**Button Usage**",
             value=(
-                f"{config.Emoji.Interface.lock} — [`Lock`](https://rei.nerv.run) the voice channel\n"
-                f"{config.Emoji.Interface.unlock} — [`Unlock`](https://rei.nerv.run) the voice channel\n"
-                f"{config.Emoji.Interface.ghost} — [`Ghost`](https://rei.nerv.run) the voice channel\n"
-                f"{config.Emoji.Interface.reveal} — [`Reveal`](https://rei.nerv.run) the voice channel\n"
-                f"{config.Emoji.Interface.claim} — [`Claim`](https://rei.nerv.run) the voice channel\n"
-                f"{config.Emoji.Interface.disconnect} — [`Disconnect`](https://rei.nerv.run) a member\n"
-                f"{config.Emoji.Interface.activity} — [`Start`](https://rei.nerv.run) a new voice channel activity\n"
-                f"{config.Emoji.Interface.information} — [`View`](https://rei.nerv.run) channel information\n"
-                f"{config.Emoji.Interface.increase} — [`Increase`](https://rei.nerv.run) the user limit\n"
-                f"{config.Emoji.Interface.decrease} — [`Decrease`](https://rei.nerv.run) the user limit\n"
+                f"{config.Emoji.Interface.lock} — [`Lock`](https://ellie.nerv.run) the voice channel\n"
+                f"{config.Emoji.Interface.unlock} — [`Unlock`](https://ellie.nerv.run) the voice channel\n"
+                f"{config.Emoji.Interface.ghost} — [`Ghost`](https://ellie.nerv.run) the voice channel\n"
+                f"{config.Emoji.Interface.reveal} — [`Reveal`](https://ellie.nerv.run) the voice channel\n"
+                f"{config.Emoji.Interface.claim} — [`Claim`](https://ellie.nerv.run) the voice channel\n"
+                f"{config.Emoji.Interface.disconnect} — [`Disconnect`](https://ellie.nerv.run) a member\n"
+                f"{config.Emoji.Interface.activity} — [`Start`](https://ellie.nerv.run) a new voice channel activity\n"
+                f"{config.Emoji.Interface.information} — [`View`](https://ellie.nerv.run) channel information\n"
+                f"{config.Emoji.Interface.increase} — [`Increase`](https://ellie.nerv.run) the user limit\n"
+                f"{config.Emoji.Interface.decrease} — [`Decrease`](https://ellie.nerv.run) the user limit\n"
             ),
         )
 

@@ -4,7 +4,7 @@ from .webserver import Webserver
 from aiohttp.web import Application, json_response, Request, Response
 
 if TYPE_CHECKING:
-    from tools.rei import rei
+    from tools.ellie import ellie
 
 def route(pattern: str, *, method: str = "GET"):
     """Decorator to register a route handler."""
@@ -14,5 +14,5 @@ def route(pattern: str, *, method: str = "GET"):
         return func
     return decorator
 
-async def setup(bot: "rei"):
+async def setup(bot: "ellie"):
     await bot.add_cog(Webserver(bot))

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 from discord.ext.commands import Cog as _Cog
 
 if TYPE_CHECKING:
-    from tools.rei import rei
+    from tools.ellie import ellie
 
 
 __all__: tuple[str, ...] = ("Cog",)
@@ -19,6 +19,6 @@ class Cog(_Cog):
             cls.__cog_name__ = cls.__name__
         return super().__init_subclass__(**kwargs)
 
-    def __init__(self, bot: rei, *args: Any, **kwargs: Any):
-        self.bot: rei = bot
+    def __init__(self, bot: ellie, *args: Any, **kwargs: Any):
+        self.bot: ellie = bot
         super().__init__(*args, **kwargs)
