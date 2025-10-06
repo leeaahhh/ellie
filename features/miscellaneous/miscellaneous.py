@@ -1159,9 +1159,9 @@ class Miscellaneous(Cog):
     
     async def _send_oscar_photo(self, ctx):
         """Helper method to send Oscar photo"""
-        async with self.bot.session.get("https://files.nerv.run/oscar/", allow_redirects=False) as response:
+        async with self.bot.session.get("https://oscar.leah.rocks/", allow_redirects=False) as response:
             if response.status != 302:
-                return await ctx.error("Failed to fetch Oscar photo.")
+                return await ctx.error("API error? oscar sleeping...")
             media_url = response.headers["Location"]
 
         embed = Embed()
@@ -1180,7 +1180,7 @@ class Miscellaneous(Cog):
     @app_commands.command(name="oscar", description="Fetch a random Oscar photo")
     async def oscar_slash(self, interaction: Interaction):
         """Fetch a random Oscar photo."""
-        async with self.bot.session.get("https://files.nerv.run/oscar/", allow_redirects=False) as response:
+        async with self.bot.session.get("https://oscar.leah.rocks/pibble/", allow_redirects=False) as response:
             if response.status != 302:
                 return await interaction.response.send_message("Failed to fetch Oscar photo.", ephemeral=True)
             media_url = response.headers["Location"]
