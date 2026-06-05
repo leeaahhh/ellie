@@ -1904,6 +1904,46 @@ class Moderation(Cog):
             moved = await gather(*tasks)
             await ctx.approve(f"Moved **{Plural(moved):member}** to {channel.mention}")
 
+    @command(
+        name="nuke",
+        usage="<reason>",
+        example="raid cleanup",
+    )
+    @has_permissions(manage_channels=True)
+    @max_concurrency(1, per=BucketType.channel)
+    @cooldown(1, 30, BucketType.channel)
+    async def nuke(
+        self,
+        ctx: Context,
+        *,
+        reason: str = "No reason provided",
+    ):
+        """Delete and recreate the current channel with the same settings"""
+        if not isinstance(ctx.channel, TextChannel):
+            return await ctx.error(
+                "This command can only be used in a **text channel**"
+            )
+
+        await ctx.prompt(
+            f"Are you sure you want to **nuke** {ctx.channel.mention}?\n> All messages in this channel will be lost"
+        )
+
+        channel = ctx.channel
+        position = channel.position
+
+        try:
+            new_channel = await channel.clone(
+                reason=f"{ctx.author}: {reason} (nuke)",
+            )
+            await new_channel.edit(position=position)
+            await channel.delete(reason=f"{ctx.author}: {reason} (nuke)")
+        except Forbidden:
+            return await ctx.error("I don't have **permission** to nuke this channel")
+        except HTTPException:
+            return await ctx.error("Couldn't **nuke** this channel")
+
+        await self.moderation_entry(ctx, new_channel, "nuke", reason)
+
     @hybrid_command(
         name="hide",
         usage="<channel> <reason>",
