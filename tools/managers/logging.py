@@ -2,6 +2,7 @@ from logging import INFO, basicConfig, getLogger
 
 ignore = (
     "pomice",
+    "wavelink",
     "client",
     "web_log",
     "gateway",

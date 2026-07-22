@@ -5,6 +5,7 @@ services:
     container_name: ellie-bot
     depends_on:
       - db
+      - lavalink
     ports:
       - "59076:59076"
     restart: unless-stopped
@@ -24,6 +25,18 @@ services:
     restart: always
     volumes:
       - data:/var/lib/postgresql/data
+
+  lavalink:
+    image: ghcr.io/lavalink-devs/lavalink:4
+    container_name: ellie-lavalink
+    restart: unless-stopped
+    environment:
+      - SERVER_PORT=2333
+      - LAVALINK_SERVER_PASSWORD=youshallnotpass
+    volumes:
+      - ./lavalink/application.yml:/opt/Lavalink/application.yml:ro
+    expose:
+      - "2333"
 
 volumes:
   data:
