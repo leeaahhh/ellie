@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import TYPE_CHECKING, Optional
 
@@ -33,6 +34,7 @@ class Music(Cog):
     def __init__(self, bot: "ellie"):
         self.bot = bot
         self.spotify = SpotifyClient(bot)
+        self._node_ready = asyncio.Event()
 
     # -- lifecycle --------------------------------------------------------------
 
@@ -96,19 +98,42 @@ class Music(Cog):
                 player.home = ctx.channel
             return player
 
-        # Check node availability
+        # Wait for the Lavalink node to be fully ready (WebSocket handshake).
+        # Pool.connect() returns after the HTTP handshake, but the WS "ready"
+        # event can arrive a moment later.  If we try to join a voice channel
+        # before the WS is up, the voice-server forwarding will stall and
+        # discord.py will hit its 30 s connect timeout.
         try:
-            wavelink.Pool.get_node()
+            node = wavelink.Pool.get_node()
         except Exception:
             await ctx.error("No **music node** is available right now")
             return None
+
+        if node.status != wavelink.NodeStatus.CONNECTED:
+            await ctx.load("Waiting for the **music node** to be ready...")
+            try:
+                await asyncio.wait_for(self._node_ready.wait(), timeout=15)
+            except asyncio.TimeoutError:
+                await ctx.error(
+                    "The **music node** isn't ready yet — please try again in a moment."
+                )
+                return None
 
         # Join and create a Player
         try:
             player = await ctx.author.voice.channel.connect(
                 cls=Player,
                 self_deaf=True,
+                timeout=60,
             )
+        except asyncio.TimeoutError:
+            log.exception("Voice channel connection timed out for guild %d", ctx.guild.id)
+            await ctx.error(
+                "Voice connection timed out — the **Lavalink node** may not be "
+                "able to reach Discord's voice servers.  Check that UDP egress "
+                "is allowed from the Lavalink container."
+            )
+            return None
         except discord.ClientException:
             await ctx.error("I was unable to join that **voice channel**")
             return None
@@ -132,6 +157,14 @@ class Music(Cog):
             payload.node,
             payload.resumed,
         )
+        self._node_ready.set()
+
+    @Cog.listener()
+    async def on_wavelink_node_closed(
+        self, node: wavelink.Node, disconnected: list[wavelink.Player]
+    ) -> None:
+        log.warning("Lavalink node %r closed — clearing ready flag.", node)
+        self._node_ready.clear()
 
     @Cog.listener()
     async def on_wavelink_track_start(
