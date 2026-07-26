@@ -107,8 +107,13 @@ async def resolve_spotify_to_youtube(
                 best_diff = diff
                 best = track
 
-    # Metadata is now stored on the Track object (see track.py),
-    # not on Playable.extras — the caller is responsible for wrapping.
+    # Stamp Spotify metadata onto the playable
+    best.extras.source = "spotify"
+    best.extras.spotify_title = spotify_meta["title"]
+    best.extras.spotify_artist = spotify_meta["artist"]
+    best.extras.spotify_url = spotify_meta["url"]
+    best.extras.spotify_thumbnail = spotify_meta.get("thumbnail")
+
     return best
 
 

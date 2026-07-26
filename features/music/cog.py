@@ -12,12 +12,8 @@ import config
 from tools.managers.cog import Cog
 from tools.managers.context import Context
 
-from .dispatcher import Dispatcher
-from .embeds import EmbedBuilder
 from .player import Player
-from .queue_manager import QueueManager
 from .spotify import SpotifyClient, SpotifyError
-from .track import Track
 from .youtube import (
     parse_query,
     resolve_spotify_to_youtube,
@@ -29,6 +25,8 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+MUSIC_ERROR_EMOJI = config.Emoji.warn or ""
+
 
 class Music(Cog):
     """Slash-command music player backed by Lavalink."""
@@ -36,7 +34,6 @@ class Music(Cog):
     def __init__(self, bot: "ellie"):
         self.bot = bot
         self.spotify = SpotifyClient(bot)
-        self.queue_manager = QueueManager()
         self._node_ready = asyncio.Event()
 
     # -- lifecycle --------------------------------------------------------------
@@ -57,51 +54,58 @@ class Music(Cog):
 
     async def cog_unload(self) -> None:
         """Disconnect all players and close node connections."""
-        for dispatcher in list(self.queue_manager._dispatchers.values()):
-            try:
-                await dispatcher.teardown()
-            except Exception:
-                pass
-        self.queue_manager.clear()
+        # Disconnect all active players
+        for node in wavelink.Pool.nodes.values():
+            for player in list(node.players.values()):
+                try:
+                    await player.teardown()
+                except Exception:
+                    pass
         await wavelink.Pool.close()
 
     # -- helpers ----------------------------------------------------------------
 
-    def _get_dispatcher(self, guild_id: int) -> Optional[Dispatcher]:
-        """Get the Dispatcher for a guild, if one exists."""
-        return self.queue_manager.get(guild_id)
-
-    async def _get_available_node(self) -> Optional[wavelink.Node]:
-        """Get an available Lavalink node, or None."""
+    def _get_player(self, guild_id: int) -> Optional[Player]:
+        """Get the Player for a guild, if one exists."""
         try:
-            return wavelink.Pool.get_node()
+            node = wavelink.Pool.get_node()
+            player = node.get_player(guild_id)
+            if isinstance(player, Player):
+                return player
         except Exception:
-            return None
+            pass
+        return None
 
-    async def _ensure_voice(self, ctx: Context) -> Optional[Dispatcher]:
-        """Join the author's voice channel and return a Dispatcher.
+    async def _ensure_voice(self, ctx: Context) -> Optional[Player]:
+        """Join the author's voice channel if not already connected.
 
-        Retries the voice connection up to 3 times on timeout, with a 2 s gap
-        between attempts.
+        Returns the Player for the guild, or None (after notifying the user).
         """
+        # Check that the user is in a voice channel
         if not ctx.author.voice or not ctx.author.voice.channel:
             await ctx.error("You're not connected to a **voice channel**")
             return None
 
-        # Return existing dispatcher if we're already in this guild
-        dispatcher = self._get_dispatcher(ctx.guild.id)
-        if dispatcher is not None:
-            if dispatcher.channel and dispatcher.channel.id != ctx.author.voice.channel.id:
+        player = self._get_player(ctx.guild.id)
+
+        if player is not None:
+            # Already connected — make sure we're in the same channel
+            if player.channel and player.channel.id != ctx.author.voice.channel.id:
                 await ctx.error("I'm already in a different **voice channel**")
                 return None
-            # Update home channel if the command came from a different text channel
-            if dispatcher.home_channel_id != ctx.channel.id:
-                dispatcher.home_channel_id = ctx.channel.id
-            return dispatcher
+            # Bind this text channel as the player's home (for now-playing embeds)
+            if getattr(player, "home", None) is None:
+                player.home = ctx.channel
+            return player
 
-        # --- Node readiness check ---
-        node = await self._get_available_node()
-        if node is None:
+        # Wait for the Lavalink node to be fully ready (WebSocket handshake).
+        # Pool.connect() returns after the HTTP handshake, but the WS "ready"
+        # event can arrive a moment later.  If we try to join a voice channel
+        # before the WS is up, the voice-server forwarding will stall and
+        # discord.py will hit its 30 s connect timeout.
+        try:
+            node = wavelink.Pool.get_node()
+        except Exception:
             await ctx.error("No **music node** is available right now")
             return None
 
@@ -115,53 +119,32 @@ class Music(Cog):
                 )
                 return None
 
-        # --- Join voice (with retry) ---
-        player: Optional[wavelink.Player] = None
-        for attempt in range(3):
-            try:
-                player = await ctx.author.voice.channel.connect(
-                    cls=Player,
-                    self_deaf=True,
-                    timeout=60,
-                )
-                break
-            except asyncio.TimeoutError:
-                if attempt < 2:
-                    log.warning(
-                        "Voice connect attempt %d failed for guild %d, retrying...",
-                        attempt + 1,
-                        ctx.guild.id,
-                    )
-                    await asyncio.sleep(2)
-                    continue
-                log.exception(
-                    "All voice connect attempts failed for guild %d", ctx.guild.id
-                )
-                await ctx.error(
-                    "Voice connection timed out after 3 attempts. "
-                    "The **Lavalink node** may not be able to reach Discord's "
-                    "voice servers — check that UDP egress is allowed from the "
-                    "Lavalink container."
-                )
-                return None
-            except discord.ClientException:
-                await ctx.error("I was unable to join that **voice channel**")
-                return None
-
-        if player is None:
-            await ctx.error("Failed to establish a voice connection")
+        # Join and create a Player
+        try:
+            player = await ctx.author.voice.channel.connect(
+                cls=Player,
+                self_deaf=True,
+                timeout=60,
+            )
+        except asyncio.TimeoutError:
+            log.exception("Voice channel connection timed out for guild %d", ctx.guild.id)
+            await ctx.error(
+                "Voice connection timed out — the **Lavalink node** may not be "
+                "able to reach Discord's voice servers.  Check that UDP egress "
+                "is allowed from the Lavalink container."
+            )
+            return None
+        except discord.ClientException:
+            await ctx.error("I was unable to join that **voice channel**")
             return None
 
-        # --- Create dispatcher ---
-        dispatcher = Dispatcher(
-            guild_id=ctx.guild.id,
-            bot=self.bot,
-            player=player,
-            home_channel_id=ctx.channel.id,
-        )
-        self.queue_manager.set(dispatcher)
+        # Track the home channel
+        player.home = ctx.channel
 
-        return dispatcher
+        # Read initial bitrate
+        await player._apply_bitrate(ctx.author.voice.channel.bitrate)
+
+        return player
 
     # -- event listeners --------------------------------------------------------
 
@@ -188,36 +171,59 @@ class Music(Cog):
         self, payload: wavelink.TrackStartEventPayload
     ) -> None:
         player = payload.player
-        if player is None or player.guild is None:
+        if not isinstance(player, Player):
             return
-        dispatcher = self._get_dispatcher(player.guild.id)
-        if dispatcher is None:
+
+        channel = player.bound_channel
+        if channel is None:
             return
-        await dispatcher.on_track_start()
+
+        embed = player.build_now_playing_embed()
+        try:
+            await channel.send(embed=embed)
+        except discord.HTTPException:
+            pass
 
     @Cog.listener()
     async def on_wavelink_track_end(
         self, payload: wavelink.TrackEndEventPayload
     ) -> None:
         player = payload.player
-        if player is None or player.guild is None:
+        if not isinstance(player, Player):
             return
-        dispatcher = self._get_dispatcher(player.guild.id)
-        if dispatcher is None:
+
+        if payload.reason == "REPLACED":
             return
-        await dispatcher.on_track_end(payload.reason)
+
+        # Let the player handle queue advancement + inactivity
+        await player._play_next()
 
     @Cog.listener()
     async def on_wavelink_track_exception(
         self, payload: wavelink.TrackExceptionEventPayload
     ) -> None:
         player = payload.player
-        if player is None or player.guild is None:
+        if not isinstance(player, Player):
             return
-        dispatcher = self._get_dispatcher(player.guild.id)
-        if dispatcher is None:
-            return
-        await dispatcher.on_track_exception(str(payload.exception))
+
+        log.warning(
+            "Track exception in guild %d: %s",
+            player.guild.id if player.guild else 0,
+            payload.exception,
+        )
+
+        channel = player.bound_channel
+        if channel:
+            try:
+                await channel.send(
+                    embed=discord.Embed(
+                        description=f"{MUSIC_ERROR_EMOJI} The current track encountered an error — skipping."
+                    )
+                )
+            except discord.HTTPException:
+                pass
+
+        await player._play_next()
 
     @Cog.listener()
     async def on_voice_state_update(
@@ -226,34 +232,38 @@ class Music(Cog):
         before: discord.VoiceState,
         after: discord.VoiceState,
     ) -> None:
+        # Ignore non-guild or our own non-channel-move events
         if member.guild is None:
             return
 
-        dispatcher = self._get_dispatcher(member.guild.id)
-        if dispatcher is None:
+        player = self._get_player(member.guild.id)
+        if player is None:
             return
 
-        # Bot was moved to a different channel
+        # Case 1: the bot was moved to a different channel
         if member.id == self.bot.user.id and after.channel is not None:
             if before.channel is not None and before.channel.id != after.channel.id:
-                from .embeds import floor_bitrate
-                floor_bitrate(after.channel.bitrate)
+                await player._apply_bitrate(after.channel.bitrate)
 
-        # Someone left the bot's voice channel — check for empty VC
-        if before.channel is not None and dispatcher.channel is not None:
-            if before.channel.id == dispatcher.channel.id:
-                humans = [m for m in dispatcher.channel.members if not m.bot]
+        # Case 2: someone left the bot's voice channel — check for empty VC
+        if before.channel is not None and player.channel is not None:
+            if before.channel.id == player.channel.id:
+                # Check current members of the player's channel (not before.channel,
+                # since VoiceState.members reflects current state, not snapshot)
+                humans = [
+                    m for m in player.channel.members if not m.bot
+                ]
                 if not humans:
-                    dispatcher._start_inactivity_timer(short=True)
+                    player._start_inactivity_timer(short=True)
 
     @Cog.listener()
-    async def on_wavelink_inactive_player(self, player: wavelink.Player) -> None:
-        if player.guild is None:
-            return
-        dispatcher = self._get_dispatcher(player.guild.id)
-        if dispatcher:
-            await dispatcher.teardown()
-            self.queue_manager.delete(player.guild.id)
+    async def on_wavelink_inactive_player(self, player: Player) -> None:
+        """Fired by wavelink when its own inactivity timeout expires."""
+        if isinstance(player, Player) and player.channel:
+            try:
+                await player.teardown()
+            except Exception:
+                pass
 
     # -- /play ------------------------------------------------------------------
 
@@ -264,18 +274,18 @@ class Music(Cog):
         Accepts YouTube search terms, YouTube video/playlist URLs,
         and Spotify track/album/playlist links.
         """
-        dispatcher = await self._ensure_voice(ctx)
-        if dispatcher is None:
+        player = await self._ensure_voice(ctx)
+        if player is None:
             return
 
         url_type, url_id = parse_query(query)
 
         # --- Spotify handling ---
         if url_type and url_type.startswith("spotify_"):
-            await self._handle_spotify(ctx, dispatcher, url_type, url_id)
+            await self._handle_spotify(ctx, player, url_type, url_id)
             return
 
-        # --- Direct YouTube URL ---
+        # --- Direct YouTube URL handling ---
         if url_type in ("youtube_video", "youtube_playlist"):
             results = await search_youtube(query)
             if results is None:
@@ -283,24 +293,18 @@ class Music(Cog):
                 return
 
             if isinstance(results, wavelink.Playlist):
-                tracks = [
-                    Track.from_youtube(t, requester_id=ctx.author.id)
-                    for t in list(results)
-                ]
-                count = dispatcher.enqueue_many(tracks)
+                count = await player.add_tracks(
+                    list(results), requester=ctx.author
+                )
                 await ctx.approve(
                     f"Added **{count}** tracks from the playlist to the queue."
                 )
             else:
-                track = Track.from_youtube(results[0], requester_id=ctx.author.id)
-                dispatcher.enqueue(track)
-                embed = EmbedBuilder.track_added(
-                    dispatcher, track, position=dispatcher.queue_size
-                )
+                track = results[0]
+                await player.add_track(track, requester=ctx.author)
+                position = player.queued_count
+                embed = player.build_added_embed(track, position=position)
                 await ctx.send(embed=embed)
-
-            if dispatcher.current is None and dispatcher.queue:
-                await dispatcher._play()
             return
 
         # --- Plain text search ---
@@ -310,28 +314,23 @@ class Music(Cog):
             return
 
         if isinstance(results, wavelink.Playlist):
-            first = list(results)[0] if results else None
+            track = list(results)[0] if results else None
         else:
-            first = results[0] if results else None
+            track = results[0]
 
-        if first is None:
+        if track is None:
             await ctx.error(f"No results found for **{query}**")
             return
 
-        track = Track.from_youtube(first, requester_id=ctx.author.id)
-        dispatcher.enqueue(track)
-        embed = EmbedBuilder.track_added(
-            dispatcher, track, position=dispatcher.queue_size
-        )
+        await player.add_track(track, requester=ctx.author)
+        position = max(player.queued_count, 1)
+        embed = player.build_added_embed(track, position=position)
         await ctx.send(embed=embed)
-
-        if dispatcher.current is None and dispatcher.queue:
-            await dispatcher._play()
 
     async def _handle_spotify(
         self,
         ctx: Context,
-        dispatcher: Dispatcher,
+        player: Player,
         url_type: str,
         spotify_id: str,
     ) -> None:
@@ -339,18 +338,15 @@ class Music(Cog):
         try:
             if url_type == "spotify_track":
                 meta = await self.spotify.get_track(spotify_id)
-                playable = await resolve_spotify_to_youtube(meta)
-                if playable is None:
+                track = await resolve_spotify_to_youtube(meta)
+                if track is None:
                     await ctx.error(
                         "Could not find a matching YouTube video for that **Spotify track**."
                     )
                     return
-                track = Track.from_spotify_meta(
-                    playable, meta, requester_id=ctx.author.id
-                )
-                dispatcher.enqueue(track)
-                embed = EmbedBuilder.track_added(
-                    dispatcher, track, position=dispatcher.queue_size
+                await player.add_track(track, requester=ctx.author)
+                embed = player.build_added_embed(
+                    track, position=max(player.queued_count, 1)
                 )
                 await ctx.send(embed=embed)
 
@@ -366,12 +362,9 @@ class Music(Cog):
 
                 resolved = 0
                 for meta in metas:
-                    playable = await resolve_spotify_to_youtube(meta)
-                    if playable is not None:
-                        track = Track.from_spotify_meta(
-                            playable, meta, requester_id=ctx.author.id
-                        )
-                        dispatcher.enqueue(track)
+                    track = await resolve_spotify_to_youtube(meta)
+                    if track is not None:
+                        await player.add_track(track, requester=ctx.author)
                         resolved += 1
 
                 if resolved == 0:
@@ -395,12 +388,9 @@ class Music(Cog):
 
                 resolved = 0
                 for meta in metas:
-                    playable = await resolve_spotify_to_youtube(meta)
-                    if playable is not None:
-                        track = Track.from_spotify_meta(
-                            playable, meta, requester_id=ctx.author.id
-                        )
-                        dispatcher.enqueue(track)
+                    track = await resolve_spotify_to_youtube(meta)
+                    if track is not None:
+                        await player.add_track(track, requester=ctx.author)
                         resolved += 1
 
                 if resolved == 0:
@@ -418,34 +408,28 @@ class Music(Cog):
             log.exception("Error resolving Spotify URL")
             await ctx.error("An error occurred while fetching Spotify metadata.")
 
-        # Kick off playback
-        if dispatcher.current is None and dispatcher.queue:
-            await dispatcher._play()
-
     # -- /pause -----------------------------------------------------------------
 
     @hybrid_command(name="pause")
     async def pause(self, ctx: Context) -> None:
         """Pause the current track."""
-        dispatcher = self._get_dispatcher(ctx.guild.id)
-        if dispatcher is None or not dispatcher.playing:
+        player = self._get_player(ctx.guild.id)
+        if player is None or not player.playing:
             await ctx.error("Nothing is playing right now.")
             return
-        await dispatcher.pause()
-        state = "Paused" if dispatcher.paused else "Resumed"
-        await ctx.approve(f"{state} playback.")
+        await player.pause(True)
+        await ctx.approve("Paused playback.")
 
     # -- /resume ----------------------------------------------------------------
 
     @hybrid_command(name="resume")
     async def resume(self, ctx: Context) -> None:
         """Resume a paused track."""
-        dispatcher = self._get_dispatcher(ctx.guild.id)
-        if dispatcher is None:
+        player = self._get_player(ctx.guild.id)
+        if player is None:
             await ctx.error("I'm not connected to a voice channel.")
             return
-        if dispatcher.paused:
-            await dispatcher.pause()
+        await player.pause(False)
         await ctx.approve("Resumed playback.")
 
     # -- /skip ------------------------------------------------------------------
@@ -454,11 +438,12 @@ class Music(Cog):
     @cooldown(2, 5, BucketType.guild)
     async def skip(self, ctx: Context) -> None:
         """Skip the current track."""
-        dispatcher = self._get_dispatcher(ctx.guild.id)
-        if dispatcher is None or not dispatcher.playing:
+        player = self._get_player(ctx.guild.id)
+        if player is None or not player.playing:
             await ctx.error("Nothing is playing right now.")
             return
-        await dispatcher.skip()
+
+        await player.skip(force=True)
         await ctx.approve("Skipped the current track.")
 
     # -- /stop ------------------------------------------------------------------
@@ -466,12 +451,12 @@ class Music(Cog):
     @hybrid_command(name="stop", aliases=["disconnect", "dc", "leave"])
     async def stop(self, ctx: Context) -> None:
         """Stop playback and disconnect from the voice channel."""
-        dispatcher = self._get_dispatcher(ctx.guild.id)
-        if dispatcher is None:
+        player = self._get_player(ctx.guild.id)
+        if player is None:
             await ctx.error("I'm not connected to a voice channel.")
             return
-        await dispatcher.teardown()
-        self.queue_manager.delete(ctx.guild.id)
+
+        await player.teardown()
         await ctx.approve("Disconnected from the voice channel.")
 
     # -- /queue -----------------------------------------------------------------
@@ -479,50 +464,73 @@ class Music(Cog):
     @hybrid_command(name="queue", aliases=["q"])
     async def queue(self, ctx: Context) -> None:
         """Show the current playback queue."""
-        dispatcher = self._get_dispatcher(ctx.guild.id)
-        if dispatcher is None:
+        player = self._get_player(ctx.guild.id)
+        if player is None:
             await ctx.error("I'm not connected to a voice channel.")
             return
 
-        if not dispatcher.queue and dispatcher.current is None:
+        if player.queue.is_empty and player.current is None:
             await ctx.error("The queue is empty.")
             return
 
-        # Build pages — 10 tracks per page
-        tracks_per_page = 10
-        pages: list[discord.Embed] = []
-        all_tracks = dispatcher.queue
+        # Gather all queued tracks
+        tracks: list[wavelink.Playable] = []
+        current = player.current
+        try:
+            # The wavelink Queue doesn't expose iteration directly, so we
+            # drain and re-fill.  This is safe because we're just reading.
+            temp: list[wavelink.Playable] = []
+            while not player.queue.is_empty:
+                t = player.queue.get_nowait()
+                temp.append(t)
+                tracks.append(t)
+            # Put them back
+            for t in temp:
+                await player.queue.put_wait(t)
+        except Exception:
+            pass
 
-        if not all_tracks and dispatcher.current:
-            # Only show now-playing
-            embed = EmbedBuilder.now_playing(dispatcher)
-            await ctx.send(embed=embed)
+        if not tracks and current is None:
+            await ctx.error("The queue is empty.")
             return
 
-        for i in range(0, len(all_tracks), tracks_per_page):
-            chunk = all_tracks[i : i + tracks_per_page]
-            page_num = (i // tracks_per_page) + 1
-            total = max((len(all_tracks) - 1) // tracks_per_page + 1, 1)
-            pages.append(
-                EmbedBuilder.queue_page(dispatcher, chunk, page_num, total)
+        from .player import _format_duration, _track_artist, _track_title
+
+        # Build pages (10 tracks per page)
+        entries: list[str] = []
+
+        if current:
+            entries.append(
+                f"**Now Playing:** [{_track_title(current)}]({current.uri or ''}) "
+                f"by *{_track_artist(current)}* `[{_format_duration(current.length)}]`"
+            )
+            entries.append("")  # spacer
+
+        for i, track in enumerate(tracks, start=1):
+            entries.append(
+                f"`{i:02d}.` **{_track_title(track)}** "
+                f"by *{_track_artist(track)}* `[{_format_duration(track.length)}]`"
             )
 
-        if not pages:
-            await ctx.error("The queue is empty.")
-            return
-
-        await ctx.paginate(pages)
+        # Use ctx.paginate() for multi-page output
+        await ctx.paginate(
+            entries,
+            display_entries=len(entries),
+            text="entries",
+            of_text="Page",
+        )
 
     # -- /nowplaying ------------------------------------------------------------
 
     @hybrid_command(name="nowplaying", aliases=["np"])
     async def nowplaying(self, ctx: Context) -> None:
         """Show the currently playing track."""
-        dispatcher = self._get_dispatcher(ctx.guild.id)
-        if dispatcher is None or dispatcher.current is None:
+        player = self._get_player(ctx.guild.id)
+        if player is None or player.current is None:
             await ctx.error("Nothing is playing right now.")
             return
-        embed = EmbedBuilder.now_playing(dispatcher)
+
+        embed = player.build_now_playing_embed()
         await ctx.send(embed=embed)
 
     # -- /loop ------------------------------------------------------------------
@@ -530,39 +538,61 @@ class Music(Cog):
     @hybrid_command(name="loop", aliases=["repeat"])
     async def loop(self, ctx: Context, mode: str = "") -> None:
         """Set or toggle the loop mode. Modes: `off`, `track`, `queue`."""
-        dispatcher = self._get_dispatcher(ctx.guild.id)
-        if dispatcher is None:
+        player = self._get_player(ctx.guild.id)
+        if player is None:
             await ctx.error("I'm not connected to a voice channel.")
             return
 
-        valid = {"off", "track", "queue"}
-        if mode:
-            if mode.lower() not in valid:
-                await ctx.error("Loop mode must be `off`, `track`, or `queue`.")
-                return
-            dispatcher.repeat = mode.lower()  # type: ignore[assignment]
-        else:
-            # Cycle: off → track → queue → off
-            cycle = {"off": "track", "track": "queue", "queue": "off"}
-            dispatcher.repeat = cycle[dispatcher.repeat]  # type: ignore[assignment]
+        mode_map = {
+            "off": wavelink.QueueMode.normal,
+            "track": wavelink.QueueMode.loop,
+            "queue": wavelink.QueueMode.loop_all,
+            "0": wavelink.QueueMode.normal,
+            "1": wavelink.QueueMode.loop,
+            "2": wavelink.QueueMode.loop_all,
+        }
 
-        await ctx.approve(f"Loop mode set to **{dispatcher.repeat}**.")
+        if mode:
+            if mode.lower() not in mode_map:
+                await ctx.error(
+                    "Loop mode must be `off`, `track`, or `queue`."
+                )
+                return
+            player.queue.mode = mode_map[mode.lower()]
+        else:
+            # Cycle: normal → loop → loop_all → normal
+            current = player.queue.mode
+            if current == wavelink.QueueMode.normal:
+                player.queue.mode = wavelink.QueueMode.loop
+            elif current == wavelink.QueueMode.loop:
+                player.queue.mode = wavelink.QueueMode.loop_all
+            else:
+                player.queue.mode = wavelink.QueueMode.normal
+
+        names = {
+            wavelink.QueueMode.normal: "off",
+            wavelink.QueueMode.loop: "track",
+            wavelink.QueueMode.loop_all: "queue",
+        }
+        await ctx.approve(
+            f"Loop mode set to **{names[player.queue.mode]}**."
+        )
 
     # -- /shuffle ---------------------------------------------------------------
 
     @hybrid_command(name="shuffle")
     async def shuffle(self, ctx: Context) -> None:
         """Shuffle the tracks in the queue."""
-        dispatcher = self._get_dispatcher(ctx.guild.id)
-        if dispatcher is None:
+        player = self._get_player(ctx.guild.id)
+        if player is None:
             await ctx.error("I'm not connected to a voice channel.")
             return
 
-        if not dispatcher.queue:
+        if player.queue.is_empty:
             await ctx.error("The queue is empty — nothing to shuffle.")
             return
 
-        count = dispatcher.shuffle()
+        count = await player.shuffle_queue()
         await ctx.approve(f"Shuffled **{count}** tracks.")
 
     # -- /volume ----------------------------------------------------------------
@@ -570,40 +600,39 @@ class Music(Cog):
     @hybrid_command(name="volume", aliases=["vol"])
     async def volume(self, ctx: Context, volume: int = -1) -> None:
         """Set or view the playback volume (0-200)."""
-        dispatcher = self._get_dispatcher(ctx.guild.id)
-        if dispatcher is None:
+        player = self._get_player(ctx.guild.id)
+        if player is None:
             await ctx.error("I'm not connected to a voice channel.")
             return
 
         if volume == -1:
-            await ctx.neutral(f"Volume is currently **{dispatcher.volume}%**.")
+            await ctx.neutral(f"Volume is currently **{player.volume}%**.")
             return
 
-        await dispatcher.set_volume(volume)
-        await ctx.approve(f"Volume set to **{dispatcher.volume}%**.")
+        volume = max(0, min(200, volume))
+        await player.set_volume(volume)
+        await ctx.approve(f"Volume set to **{volume}%**.")
 
     # -- /seek ------------------------------------------------------------------
 
     @hybrid_command(name="seek")
     async def seek(self, ctx: Context, position: int) -> None:
         """Seek to a position in the current track (in seconds)."""
-        dispatcher = self._get_dispatcher(ctx.guild.id)
-        if dispatcher is None or dispatcher.current is None:
+        player = self._get_player(ctx.guild.id)
+        if player is None or player.current is None:
             await ctx.error("Nothing is playing right now.")
             return
 
-        track = dispatcher.current
-        if not track.is_seekable:
+        if not player.current.is_seekable:
             await ctx.error("The current track doesn't support seeking.")
             return
 
         position_ms = position * 1000
-        if position_ms < 0 or position_ms > track.duration_ms:
+        if position_ms < 0 or position_ms > player.current.length:
             await ctx.error(
-                f"Position must be between `0` and `{track.duration_ms // 1000}` seconds."
+                f"Position must be between `0` and `{player.current.length // 1000}` seconds."
             )
             return
 
-        if dispatcher.player:
-            await dispatcher.player.seek(position_ms)
-            await ctx.approve(f"Seeked to **{position}** seconds.")
+        await player.seek(position_ms)
+        await ctx.approve(f"Seeked to **{position}** seconds.")
