@@ -56,9 +56,9 @@ class Authorization:
         client_secret: str = ""
 
     class Lavalink:
-        host: str = "lavalink"      # Docker Compose service name
+        host: str = ""
         port: int = 2333
-        password: str = "youshallnotpass"
+        password: str = ""
         secure: bool = False
     # Get API key from https://www.remove.bg/ | Get API key from https://www.weatherapi.com/
     removebg: str = ""
