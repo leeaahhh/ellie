@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 import discord
 
+from .dispatcher import Dispatcher
 from .track import Track
-
-if TYPE_CHECKING:
-    from .dispatcher import Dispatcher
 
 # Valid Discord voice channel bitrates in bps
 VALID_BITRATES = [
